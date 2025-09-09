@@ -1,0 +1,434 @@
+// rules.js — Baseball rules engine (CPBL/MLB compatible, browser-ready ES module)
+
+/** @typedef {"TOP"|"BOTTOM"} Half */
+/** @typedef {{on1:boolean,on2:boolean,on3:boolean}} Bases */
+/** @typedef {{away:number[],home:number[]}} Linescore */
+/** @typedef {"away"|"home"} Side */
+
+/**
+ * 標準事件碼（建議從 ASR/NLP 正規化成這些）
+ * - GO: 滾地球出局 (默認：打者在一壘出局；可 meta.doublePlay 觸發 DP)
+ * - FO: 飛球出局 (默認：跑者不動；可 meta.tagUp 指定帶跑得分/推進)
+ * - FC: 野手選擇 (通常前導跑者出局、打者上到一壘)
+ * - DP/TP: 雙殺/三殺
+ * 其餘請見下方 switch
+ * @typedef {
+ *  "1B"|"2B"|"3B"|"HR"|"BB"|"IBB"|"HBP"|
+ *  "K"|"GO"|"FO"|"IF"|"SF"|"SAC"|"FC"|
+ *  "DP"|"TP"|
+ *  "SB2"|"SB3"|"SBH"|"CS2"|"CS3"|"PO1"|"PO2"|"PO3"|
+ *  "WP"|"PB"|"BK"
+ * } EventCode
+ */
+
+/**
+ * PlayEvent.meta（可選）可提供細節，讓規則更精準
+ * - for GO:
+ *    - doublePlay: true|{order:["2","1"]}  // 例如 6-4-3，先封二再一
+ *    - outsOn: ["BR","R1","R2","R3"]       // 指定誰出局（打者BR、壘上跑者 R1/R2/R3）
+ *    - advances: {"R1":1,"R2":0,"R3":0}    // 額外推進（0:停、1:＋一壘、…），若未提供用強迫進壘
+ * - for FO:
+ *    - tagUp: {"R3":1,"R2":0,"R1":0}       // 誰在補位後推進，R3:1 代表三壘回本壘得分
+ *    - sacrifice: true                     // 視為 SF（高飛犧牲打），會自動判定 R3 得分
+ * - for FC:
+ *    - outLead: "R3"|"R2"|"R1"             // 指定前導跑者被抓
+ *    - batterSafeBase: 1                   // 打者上壘壘位（默認 1）
+ * - for BB/HBP:
+ *    - rbi: number                         // 少見但允許指定是否記分（默認按強迫進壘推斷）
+ * @typedef {Object} Meta
+ */
+
+/** @typedef {{ts?:string,raw?:string,code:EventCode,meta?:any}} PlayEvent */
+
+/** @typedef {{
+ * inning:number, half:Half, outs:number, bases:Bases,
+ * linescore:Linescore, batting:Side
+ * }} GameState */
+
+export function initialState() {
+  return {
+    inning: 1,
+    half: "TOP",
+    outs: 0,
+    bases: { on1:false, on2:false, on3:false },
+    linescore: { away:[], home:[] },
+    batting: "away"
+  };
+}
+
+function scoreRun(state, n) {
+  if (n <= 0) return;
+  const arr = state.linescore[state.batting];
+  while (arr.length < state.inning) arr.push(0);
+  arr[state.inning - 1] += n;
+}
+
+function switchHalfInning(state) {
+  state.outs = 0;
+  state.bases = { on1:false, on2:false, on3:false };
+  if (state.half === "TOP") { state.half = "BOTTOM"; state.batting = "home"; }
+  else { state.half = "TOP"; state.batting = "away"; state.inning += 1; }
+}
+
+function basesStr(b) {
+  return (b.on1?'1':'-') + (b.on2?'2':'-') + (b.on3?'3':'-');
+}
+
+// -- 低層工具 -----------------------------------------------------------------
+function out(state, n=1) {
+  state.outs += n;
+  if (state.outs >= 3) { switchHalfInning(state); return true; }
+  return false;
+}
+
+// 按強迫進壘鏈移動，回傳此過程產生的得分
+function forceAdvanceChain(b) {
+  let runs = 0;
+  // 滿壘且打者/一壘被擠 → 擠回 1 分
+  if (b.on1 && b.on2 && b.on3) runs++;
+  // 從後往前推
+  if (b.on2 && b.on1) { b.on3 = true; b.on2 = false; }
+  if (b.on1) { b.on2 = true; b.on1 = false; }
+  // 由呼叫者決定打者是否佔 1 壘
+  return runs;
+}
+
+// 進壘：把 fromBase 移到 toBase（1/2/3/H），回傳是否得分
+function advanceOne(b, fromBase, toBase) {
+  // 清 from
+  if (fromBase === 1) b.on1 = false;
+  else if (fromBase === 2) b.on2 = false;
+  else if (fromBase === 3) b.on3 = false;
+  // 設 to
+  if (toBase === 'H') return 1; // 得分
+  if (toBase === 1) b.on1 = true;
+  if (toBase === 2) b.on2 = true;
+  if (toBase === 3) b.on3 = true;
+  return 0;
+}
+
+// 安打進壘（簡化常規）
+function applyHit(state, kind) {
+  const b = state.bases;
+  let runs = 0;
+
+  if (kind === "1B") {
+    if (b.on3) runs += advanceOne(b, 3, 'H');
+    const n3 = b.on2 ? 3 : 0;
+    const n2 = b.on1 ? 2 : 0;
+    if (b.on2) advanceOne(b, 2, 3);
+    if (b.on1) advanceOne(b, 1, 2);
+    b.on1 = true; // batter to 1st
+  }
+  else if (kind === "2B") {
+    if (b.on3) runs += advanceOne(b, 3, 'H');
+    if (b.on2) runs += advanceOne(b, 2, 'H');
+    if (b.on1) { advanceOne(b, 1, 3); }
+    b.on2 = true; b.on1 = false;
+  }
+  else if (kind === "3B") {
+    if (b.on3) runs += advanceOne(b, 3, 'H');
+    if (b.on2) runs += advanceOne(b, 2, 'H');
+    if (b.on1) runs += advanceOne(b, 1, 'H');
+    b.on1=b.on2=false; b.on3=true;
+  }
+  else if (kind === "HR") {
+    runs += (b.on1?1:0) + (b.on2?1:0) + (b.on3?1:0) + 1;
+    b.on1=b.on2=b.on3=false;
+  }
+
+  if (runs) scoreRun(state, runs);
+}
+
+// -- 規則主體 -----------------------------------------------------------------
+export function applyEvent(state, ev) {
+  const before = { bases: basesStr(state.bases), outs: state.outs };
+  const b = state.bases;
+  const code = ev.code;
+  const meta = ev.meta || {};
+
+  const endIf3 = () => (state.outs >= 3) && (switchHalfInning(state), true);
+
+  switch (code) {
+    // 安打類
+    case "1B": case "2B": case "3B": case "HR":
+      applyHit(state, code); break;
+
+    // 四壞 / 故四 / 觸身
+    case "BB":
+    case "IBB":
+    case "HBP": {
+      const forced = forceAdvanceChain(b);
+      scoreRun(state, forced);
+      b.on1 = true; // 打者佔一壘
+      break;
+    }
+
+    // 三振
+    case "K": { out(state, 1); break; }
+
+    // 滾地球出局（GO）
+    // 預設：打者在一壘被封殺（+1 出局），其他跑者僅強迫進壘
+    // 若 meta.doublePlay=true 或 outsOn 指定，則做 DP（常見 6-4-3：R1 與打者出局）
+    case "GO": {
+      // 先處理 DP
+      if (meta.doublePlay && state.outs <= 1 && (b.on1 || meta.outsOn?.includes("R1"))) {
+        // 預設 DP：R1 出局 + 打者出局
+        // 若有 R2 也可能被傳封（二→一）但簡化成 6-4-3
+        // 先抓 R1，再抓打者
+        if (b.on1) { b.on1 = false; }
+        state.outs += 2;
+        // 其他跑者：只有被強迫才推進（R2->3, R3->H）
+        let runs = 0;
+        if (b.on3 && b.on2) { runs += advanceOne(b, 3, 'H'); } // 三→本（被 R2 強迫？否，DP 情境多為抓一二）
+        if (b.on2 && !b.on3) { /* R2 不強迫，通常停 */ }
+        // 打者在一壘出局，不上壘
+        if (endIf3()) break;
+        if (runs) scoreRun(state, runs);
+      } else {
+        // 單出局：打者出局 + 強迫進壘
+        state.outs += 1;
+        if (endIf3()) break;
+        const forced = forceAdvanceChain(b);
+        scoreRun(state, forced);
+        // 打者出局，不佔壘
+      }
+      break;
+    }
+
+    // 飛球出局（FO）
+    // 預設：打者出局，跑者不動。
+    // 若 meta.tagUp 指定，則在出局後進行補位推進（R3:1 → 得分）
+    case "FO": {
+      state.outs += 1;
+      if (endIf3()) break;
+      const tag = meta.tagUp || {};
+      let runs = 0;
+      if (tag.R3 && b.on3) runs += advanceOne(b, 3, tag.R3 >= 1 ? 'H' : 3);
+      if (tag.R2 && b.on2) advanceOne(b, 2, tag.R2 >= 1 ? 3 : 2);
+      if (tag.R1 && b.on1) advanceOne(b, 1, tag.R1 >= 1 ? 2 : 1);
+      if (runs) scoreRun(state, runs);
+      break;
+    }
+
+    // 內野飛球必死（IF） — 打者出局、跑者不能偷進（保持）
+    case "IF": {
+      state.outs += 1;
+      endIf3();
+      break;
+    }
+
+    // 高飛犧牲打（SF）：打者出局 + 三壘跑者回本壘得分（若出局後未第三個出局）
+    case "SF": {
+      state.outs += 1;
+      if (state.outs < 3 && b.on3) {
+        scoreRun(state, 1);
+        b.on3 = false;
+      }
+      endIf3();
+      break;
+    }
+
+    // 犧牲觸擊（SAC）：打者出局 + 強迫跑者前進一個壘（滿壘則擠回 1 分）
+    case "SAC": {
+      state.outs += 1;
+      if (endIf3()) break;
+      const forced = forceAdvanceChain(b);
+      scoreRun(state, forced);
+      break;
+    }
+
+    // 野手選擇（FC）：預設抓前導跑者，打者安全上一壘
+    // - 如果有 R3 → 抓 R3；否則抓 R2；否則抓 R1；都沒有就打者上一壘
+    case "FC": {
+      let outLead = meta.outLead; // "R3"/"R2"/"R1"
+      if (!outLead) outLead = b.on3 ? "R3" : (b.on2 ? "R2" : (b.on1 ? "R1" : null));
+
+      if (outLead === "R3" && b.on3) b.on3 = false;
+      else if (outLead === "R2" && b.on2) b.on2 = false;
+      else if (outLead === "R1" && b.on1) b.on1 = false;
+
+      // 打者安全上一壘（若那壘有人就順推一下，不計分）
+      if (!b.on1) b.on1 = true; else { /* 罕見擠壘，可強迫鏈，但簡化先不推 */ }
+
+      state.outs += 1;
+      endIf3();
+      break;
+    }
+
+    // 雙殺 / 三殺
+    // DP：預設抓 R1 + 打者（滾地雙殺 6-4-3），其他跑者維持；若 meta 指定 outsOn 則依據
+    case "DP": {
+      if (state.outs <= 1) {
+        if (meta && Array.isArray(meta.outsOn)) {
+          for (const who of meta.outsOn.slice(0,2)) {
+            if (who === "R1" && b.on1) b.on1 = false;
+            if (who === "R2" && b.on2) b.on2 = false;
+            if (who === "R3" && b.on3) b.on3 = false;
+          }
+          state.outs += 2;
+        } else {
+          // 默認 R1 + 打者
+          if (b.on1) b.on1 = false;
+          state.outs += 2;
+        }
+      } else {
+        // 2 出局時無法再雙殺到 4 出局，做單出局保底
+        state.outs += 1;
+      }
+      endIf3();
+      break;
+    }
+
+    case "TP": {
+      state.outs += 3;
+      switchHalfInning(state);
+      break;
+    }
+
+    // 盜壘 / 阻殺 / 牽制
+    case "SB2": { if (b.on1 && !b.on2) { b.on1=false; b.on2=true; } break; }
+    case "SB3": { if (b.on2 && !b.on3) { b.on2=false; b.on3=true; } break; }
+    case "SBH": { if (b.on3) { b.on3=false; scoreRun(state,1); } break; }
+    case "CS2": { if (b.on2) { b.on2=false; out(state,1); } break; }
+    case "CS3": { if (b.on3) { b.on3=false; out(state,1); } break; }
+    case "PO1": { if (b.on1) { b.on1=false; out(state,1); } break; }
+    case "PO2": { if (b.on2) { b.on2=false; out(state,1); } break; }
+    case "PO3": { if (b.on3) { b.on3=false; out(state,1); } break; }
+
+    // 暴投/捕逸/投手犯規（簡化：所有跑者+1 壘；三壘者得分）
+    case "WP":
+    case "PB":
+    case "BK": {
+      let runs = 0;
+      if (b.on3) runs += advanceOne(b, 3, 'H');
+      if (b.on2 && !b.on3) advanceOne(b, 2, 3);
+      if (b.on1 && !b.on2) advanceOne(b, 1, 2);
+      if (runs) scoreRun(state, runs);
+      break;
+    }
+
+    default: break;
+  }
+
+  return {
+    before,
+    after: { bases: basesStr(state.bases), outs: state.outs },
+    state
+  };
+}
+
+// ----------------------------------- Tests ----------------------------------
+export function runSelfTests() {
+  const T = (name, fn) => {
+    const s = initialState();
+    const res = fn(s);
+    const ok = res.pass;
+    console.log((ok?"✅":"❌"), name, ok? "":"=> "+res.msg);
+  };
+
+  // utilities
+  const clone = (s)=>JSON.parse(JSON.stringify(s));
+
+  T("1) 1B from empty -> 1--", (s)=>{
+    applyEvent(s,{code:"1B"});
+    return {pass: s.bases.on1 && !s.bases.on2 && !s.bases.on3, msg: JSON.stringify(s)};
+  });
+
+  T("2) 1B with R3 -> score + keep 1-- (R2 from R1, R3 scores)", (s)=>{
+    s.bases.on3=true;
+    applyEvent(s,{code:"1B"});
+    return {pass: s.linescore.away[0]===1 && s.bases.on1 && !s.bases.on3, msg: JSON.stringify(s)};
+  });
+
+  T("3) 2B with R1 -> R1 to 3B, batter to 2B", (s)=>{
+    s.bases.on1=true;
+    applyEvent(s,{code:"2B"});
+    return {pass: s.bases.on2 && s.bases.on3 && !s.bases.on1, msg: JSON.stringify(s)};
+  });
+
+  T("4) HR with 123 -> +4, bases empty", (s)=>{
+    s.bases={on1:true,on2:true,on3:true};
+    applyEvent(s,{code:"HR"});
+    return {pass: s.linescore.away[0]===4 && !s.bases.on1 && !s.bases.on2 && !s.bases.on3, msg: JSON.stringify(s)};
+  });
+
+  T("5) BB with 123 -> +1 score, still 123 (batter to 1st)", (s)=>{
+    s.bases={on1:true,on2:true,on3:true};
+    applyEvent(s,{code:"BB"});
+    return {pass: s.linescore.away[0]===1 && s.bases.on1 && s.bases.on2 && s.bases.on3, msg: JSON.stringify(s)};
+  });
+
+  T("6) GO default (batter out), force only", (s)=>{
+    s.bases={on1:true,on2:false,on3:false};
+    applyEvent(s,{code:"GO"}); // batter out, R1 forced to 2B
+    return {pass: s.outs===1 && !s.bases.on1 && s.bases.on2, msg: JSON.stringify(s)};
+  });
+
+  T("7) GO doublePlay with R1 -> DP (R1 out + BR out), 2 outs", (s)=>{
+    s.bases={on1:true,on2:false,on3:false};
+    applyEvent(s,{code:"GO",meta:{doublePlay:true}});
+    return {pass: s.outs===2 && !s.bases.on1 && !s.bases.on2, msg: JSON.stringify(s)};
+  });
+
+  T("8) FO default, runners hold", (s)=>{
+    s.bases={on1:true,on2:true,on3:true};
+    applyEvent(s,{code:"FO"});
+    return {pass: s.outs===1 && s.bases.on1 && s.bases.on2 && s.bases.on3, msg: JSON.stringify(s)};
+  });
+
+  T("9) FO with tagUp R3 -> +1 score", (s)=>{
+    s.bases={on3:true};
+    applyEvent(s,{code:"FO",meta:{tagUp:{R3:1}}});
+    return {pass: s.outs===1 && !s.bases.on3 && s.linescore.away[0]===1, msg: JSON.stringify(s)};
+  });
+
+  T("10) SF -> out + R3 scores", (s)=>{
+    s.bases={on3:true};
+    applyEvent(s,{code:"SF"});
+    return {pass: s.outs===1 && !s.bases.on3 && s.linescore.away[0]===1, msg: JSON.stringify(s)};
+  });
+
+  T("11) SAC -> out + force adv", (s)=>{
+    s.bases={on1:true,on2:true,on3:false};
+    applyEvent(s,{code:"SAC"});
+    return {pass: s.outs===1 && s.bases.on1===false && s.bases.on2===true && s.bases.on3===true, msg: JSON.stringify(s)};
+  });
+
+  T("12) FC lead R2 out, BR safe @1", (s)=>{
+    s.bases={on1:false,on2:true,on3:false};
+    applyEvent(s,{code:"FC",meta:{outLead:"R2"}});
+    return {pass: s.outs===1 && s.bases.on1===true && s.bases.on2===false, msg: JSON.stringify(s)};
+  });
+
+  T("13) DP default: R1 + BR out", (s)=>{
+    s.bases={on1:true,on2:true,on3:false};
+    applyEvent(s,{code:"DP"});
+    return {pass: s.outs===2 && !s.bases.on1 && s.bases.on2, msg: JSON.stringify(s)};
+  });
+
+  T("14) WP with R3 -> +1", (s)=>{
+    s.bases={on3:true};
+    applyEvent(s,{code:"WP"});
+    return {pass: s.linescore.away[0]===1 && !s.bases.on3, msg: JSON.stringify(s)};
+  });
+
+  T("15) SB2 from R1", (s)=>{
+    s.bases={on1:true};
+    applyEvent(s,{code:"SB2"});
+    return {pass: !s.bases.on1 && s.bases.on2, msg: JSON.stringify(s)};
+  });
+
+  T("16) CS3 from R3", (s)=>{
+    s.bases={on3:true};
+    applyEvent(s,{code:"CS3"});
+    return {pass: s.outs===1 && !s.bases.on3, msg: JSON.stringify(s)};
+  });
+
+  T("17) Three outs switch half", (s)=>{
+    applyEvent(s,{code:"K"});
+    applyEvent(s,{code:"K"});
+    applyEvent(s,{code:"K"});
+    return {pass: s.half==="BOTTOM" && s.outs===0 && !s.bases.on1, msg: JSON.stringify(s)};
+  });
+}
