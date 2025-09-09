@@ -34,7 +34,7 @@ async function loadEventsWithMeta() {
 
   if (lm) {
     const d = new Date(lm);
-    versionText = `資料版本：${fmt.format(d)}（ETag ${etag ? etag.replaceAll('"','') : '無'}）`;
+    versionText = `資料版本：${fmt.format(d)}`;
   } else {
     const short = await sha256Short(text);
     versionText = `資料版本：內容雜湊 ${short}`;
