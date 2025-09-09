@@ -28,15 +28,28 @@ function renderScoreboard(linescore){
   html+=row("Away",linescore.away||[]); html+=row("Home",linescore.home||[]); html+="</table>";
   document.getElementById("scoreboard").innerHTML=html;
 }
-function renderBases(bases){
-  document.getElementById("bases").innerHTML = `
-    <div class="base second ${bases.on2 ? 'active' : ''}" aria-label="二壘"></div>
-    <div class="base first  ${bases.on1 ? 'active' : ''}" aria-label="一壘"></div>
-    <div class="base third  ${bases.on3 ? 'active' : ''}" aria-label="三壘"></div>
-  `;
+ function renderBases(bases){
+  // 以 260x260 畫布、菱形四角：上(130,24) 右(236,130) 下(130,236) 左(24,130)
+  // 壘位：二壘=上端附近、一壘=右端附近、三壘=左端附近
+   const on1 = bases.on1 ? 'on' : '';
+   const on2 = bases.on2 ? 'on' : '';
+   const on3 = bases.on3 ? 'on' : '';
+   document.getElementById('bases').innerHTML = `
+   <svg id="diamond" viewBox="0 0 260 260" aria-label="壘包菱形">
+      <!-- 外框菱形 -->
+      <path class="diamond-line" d="M130,24 L236,130 L130,236 L24,130 Z"/>
+      <!-- 二壘 -->
+      <rect x="118" y="36" width="24" height="24" transform="rotate(45 130 48)" class="base-node ${on2}" />
+      <!-- 一壘 -->
+      <rect x="212" y="118" width="24" height="24" transform="rotate(45 224 130)" class="base-node ${on1}" />
+      <!-- 三壘 -->
+      <rect x="36" y="118" width="24" height="24" transform="rotate(45 48 130)" class="base-node ${on3}" />
+   </svg>`;
 }
 function renderStatus(state){
-  document.getElementById("status").innerText=`Inning: ${state.inning} ${state.half} | Outs: ${state.outs} | Batting: ${state.batting}`;
+  document.getElementById("pillInning").textContent = `${state.inning}${state.half==='TOP'?'上':'下'}`;
+  document.getElementById("pillOuts").textContent = state.outs;
+  document.getElementById("pillBat").textContent = state.batting === 'away' ? 'Away' : 'Home';
 }
 function renderTimeline(frames, idx){
   const log=frames.map((f,i)=>`${i===idx?'👉 ':''}${f.ts||'--:--'} | ${f.event.code} | ${f.before.bases}/${f.before.outs} → ${f.after.bases}/${f.after.outs} | runs:${f.runs}`).join("\n");
