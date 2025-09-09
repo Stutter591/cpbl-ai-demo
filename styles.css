@@ -50,32 +50,51 @@ main{
 #scoreboard tr:last-child td{border-bottom:none}
 #scoreboard td:first-child{text-align:left; padding-left:16px; font-weight:700}
 
-/* ====== 場上狀態卡 ====== */
-.state-grid{display: grid;grid-template-columns: 1fr 240px;gap: 18px;align-items: center;}
-/* 右側資訊膠囊 */
+/* ===== 場上狀態布局：左(菱形) + 右(資訊區) 不溢出 ===== */
+.state-wrap{display:grid;grid-template-columns: 1fr 280px;  /* 右邊固定 280，避免擠爆 */
+  gap:18px; align-items:center;}
+@media (max-width: 1200px){
+  .state-wrap{ grid-template-columns: 1fr 260px; }}
+@media (max-width: 900px){
+  .state-wrap{ grid-template-columns: 1fr; } /* 手機改上下 */}
+
+/* 右側資訊區 */
+.side{ display:flex; flex-direction:column; gap:14px; min-width:0; }
+.side .row{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+
+/* 小膠囊：不換行、不超框 */
 .pill{
-  width: 100%;display: flex;align-items: center;justify-content: space-between;gap: 12px;
-  padding: 10px 14px;border: 1px solid var(--card-border);background: rgba(255,255,255,.03);border-radius: 14px;box-sizing: border-box;    
+  border:1px solid var(--card-border);
+  background:rgba(255,255,255,.03);
+  border-radius:14px; padding:10px 12px;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:10px; width:100%; box-sizing:border-box;
 }
-.pill .label{  color: var(--muted);font-size: 14px;white-space: nowrap;flex: 0 0 auto;}
-.pill .val{font-weight: 800;
-  font-size: clamp(14px, 2.2vw, 20px); /* 小螢幕自動縮字，大螢幕最多 20px */
-  line-height: 1;                      /* 防止行高把內容撐出框 */
-  text-align: right;
-  max-width: 60%;                      /* 留空間給左側標籤 */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;}
+.pill.small .label{ color:var(--muted); white-space:nowrap; font-size:14px; }
+.pill.small .val{
+  font-weight:800; line-height:1; white-space:nowrap;
+  max-width:60%; overflow:hidden; text-overflow:ellipsis;
+  font-size: clamp(14px, 2.2vw, 18px);
+}
+
+/* 出局數紅燈 */
+.outs{ display:flex; align-items:center; justify-content:space-between;
+       border:1px solid var(--card-border); background:rgba(255,255,255,.03);
+       border-radius:14px; padding:10px 12px; }
+.outs .label{ color:var(--muted); }
+.outs .dots{ display:flex; gap:10px; }
+.outs .dots i{
+  display:inline-block; width:14px; height:14px; border-radius:50%;
+  background:#2b3a54; box-shadow:inset 0 0 0 2px #26344e;
+}
+.outs .dots i.on{
+  background:#ef4444; box-shadow:0 0 10px rgba(239,68,68,.7), inset 0 0 0 2px #991b1b;
+}
 
 /* ====== 壘包菱形（SVG） ====== */
-#diamond{
-  width:260px; height:260px; margin:0 auto;
-  display:block;
-}
-.base-node{
-  stroke:#2c3e5f; stroke-width:2; fill:var(--base-off);
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,.35));
-}
+#diamond{ width:260px; height:260px; display:block; margin:0 auto; }
+.base-node{ stroke:#2c3e5f; stroke-width:2; fill:var(--base-off);
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,.35)); }
 .base-node.on{ fill:var(--base-on); stroke:#0f3b25 }
 .diamond-line{ stroke:var(--accent); stroke-width:4; fill:none; opacity:.9 }
 
