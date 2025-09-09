@@ -21,6 +21,19 @@
     <section id="bases"></section>
     <section id="status"></section>
   </main>
+  <section id="controls" style="display:flex;gap:.5rem;align-items:center;padding:0 1rem;">
+    <button id="btnPrev">⏮ 上一步</button>
+    <button id="btnPlay">▶️ 播放</button>
+    <button id="btnNext">⏭ 下一步</button>
+    <label style="margin-left:8px;">速度
+      <select id="speed">
+        <option value="1200">慢</option>
+        <option value="800" selected>中</option>
+        <option value="400">快</option>
+      </select>
+    </label>
+    <span id="nowEvent" style="margin-left:auto;opacity:.8;font-family:monospace;"></span>
+  </section>
 
   <aside id="timeline"></aside>
 
