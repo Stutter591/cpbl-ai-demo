@@ -45,18 +45,14 @@ function renderScoreboard(linescore){
  function renderStatus(state){
    // 膠囊：局數、攻擊方
    const half = state.half === 'TOP' ? '上' : '下';
-   const batting = state.batting === 'away' ? 'Away' : 'Home';
    document.getElementById("pillInning").textContent = `${state.inning}${half}`;
-   document.getElementById("pillBat").textContent = batting;
+   document.getElementById("pillBat").textContent = state.batting === 'away' ? 'Away' : 'Home';
 
-   // 紅燈：出局數（0~3；通常 0~2 亮）
-   const o1 = document.getElementById('out1');
+   // 出局數紅燈：只兩顆（0/1/2）
+   const o1 = document.getElementById('out1'); 
    const o2 = document.getElementById('out2');
-   const o3 = document.getElementById('out3');
-   [o1,o2,o3].forEach(el => el.classList.remove('on'));
-   if (state.outs >= 1) o1.classList.add('on');
-   if (state.outs >= 2) o2.classList.add('on');
-   if (state.outs >= 3) o3.classList.add('on'); // 幾乎不會在半局內顯示，但保險
+   o1.classList.toggle('on', state.outs >= 1);
+   o2.classList.toggle('on', state.outs >= 2);
 }
 
 function renderTimeline(frames, idx){
