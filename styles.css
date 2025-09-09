@@ -5,13 +5,18 @@ main { display: flex; justify-content: space-around; padding: 1rem; }
 #scoreboard table { border-collapse: collapse; }
 #scoreboard th, #scoreboard td { border: 1px solid #333; padding: .5rem; text-align: center; }
 
-#bases { position: relative; width: 200px; height: 200px; margin-top: 1rem; }
-.base { width: 40px; height: 40px; border:2px solid #111; position:absolute; transform:rotate(45deg); background:#fff; box-shadow:0 0 0 1px #111 inset; }
-.base.active { background:#22c55e; box-shadow:0 0 0 2px #14532d inset, 0 2px 6px rgba(0,0,0,.25); }
-.base.home { bottom: 0; left: 80px; }
-.base.first { right: 0; top: 80px; }
-.base.second { top: 0; left: 80px; }
-.base.third { left: 0; top: 80px; }
+/* 壘包區塊容器：維持正方形，中央為二壘，上右是壘包菱形配置 */
+#bases { position: relative; width: 220px; height: 220px; margin-top: 1rem; }
+
+/* 只保留三個壘包 */
+.base { width: 44px; height: 44px; border: 2px solid #111; position: absolute;
+        transform: rotate(45deg); background: #fff; box-shadow: 0 0 0 1px #111 inset; }
+.base.active { background: #22c55e; box-shadow: 0 0 0 2px #14532d inset, 0 2px 6px rgba(0,0,0,.25); }
+
+/* 壘包定位（不含本壘），讓三壘—二壘—一壘呈菱形 */
+.base.second { top: 0; left: 50%; transform: translate(-50%, 0) rotate(45deg); }
+.base.first  { top: 50%; right: 0; transform: translate(0, -50%) rotate(45deg); }
+.base.third  { top: 50%; left: 0;  transform: translate(0, -50%) rotate(45deg); }
 
 #status { font-size: 1.2rem; margin-top: 1rem; }
 #timeline { padding: 1rem; border-top: 2px solid #ddd; background: #f9fafb; font-family: monospace; height: 200px; overflow-y: auto; }
