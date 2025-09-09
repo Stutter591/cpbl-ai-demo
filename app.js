@@ -42,17 +42,34 @@ function renderScoreboard(linescore){
      <rect x="36" y="118" width="24" height="24" transform="rotate(45 48 130)" class="base-node ${on3}" />
    </svg>`;
 }
+
+// 若找不到 out1/out2，就自動補上，避免 null
+ function ensureOutDots() {
+   const dots = document.querySelector('.outs .dots');
+   if (dots && !document.getElementById('out1') && !document.getElementById('out2')) {
+     dots.innerHTML = '<i id="out1"></i><i id="out2"></i>';}
+}
+// 更新「局數 / 攻擊方」＋ 2 顆紅燈
  function renderStatus(state){
    // 膠囊：局數、攻擊方
    const half = state.half === 'TOP' ? '上' : '下';
-   document.getElementById("pillInning").textContent = `${state.inning}${half}`;
-   document.getElementById("pillBat").textContent = state.batting === 'away' ? 'Away' : 'Home';
-
+   const batting = state.batting === 'away' ? 'Away' : 'Home';
+   const pillInning = document.getElementById("pillInning");
+   const pillBat = document.getElementById("pillBat");
+   if (pillInning) pillInning.textContent = `${state.inning}${half}`;
+   if (pillBat) pillBat.textContent = batting;
+   // 確保有兩顆燈
+   ensureOutDots();
    // 出局數紅燈：只兩顆（0/1/2）
    const o1 = document.getElementById('out1'); 
    const o2 = document.getElementById('out2');
-   o1.classList.toggle('on', state.outs >= 1);
-   o2.classList.toggle('on', state.outs >= 2);
+   if (o1 && o2) {
+    o1.classList.toggle('on', state.outs >= 1);
+    o2.classList.toggle('on', state.outs >= 2);
+  } else {
+    // 若還是抓不到，避免拋錯
+    console.warn('outs dots not found in DOM');
+  }
 }
 
 function renderTimeline(frames, idx){
