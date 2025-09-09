@@ -30,7 +30,7 @@ header h1{font-size:20px; font-weight:700}
 
 main{
   padding:16px; display:grid; gap:16px;
-  grid-template-columns: 1fr 420px; /* 左：記分板；右：場上狀態 */
+  grid-template-columns: 1fr 480px; /* 左：記分板；右：場上狀態 */
 }
 .card{
   background:var(--card); border:1px solid var(--card-border);
@@ -51,16 +51,21 @@ main{
 #scoreboard td:first-child{text-align:left; padding-left:16px; font-weight:700}
 
 /* ====== 場上狀態卡 ====== */
-.state-grid{display:grid; grid-template-columns: 1fr 180px; gap:18px; align-items:center}
-
+.state-grid{display: grid;grid-template-columns: 1fr 240px;gap: 18px;align-items: center;}
 /* 右側資訊膠囊 */
 .pill{
-  border:1px solid var(--card-border); background:rgba(255,255,255,.03);
-  padding:12px 14px; border-radius:14px; margin-bottom:12px;
-  display:flex; justify-content:space-between; align-items:center;
+  width: 100%;display: flex;align-items: center;justify-content: space-between;gap: 12px;
+  padding: 10px 14px;border: 1px solid var(--card-border);background: rgba(255,255,255,.03);border-radius: 14px;box-sizing: border-box;    
 }
-.pill .label{color:var(--muted)}
-.pill .val{font-weight:800; font-size:18px}
+.pill .label{  color: var(--muted);font-size: 14px;white-space: nowrap;flex: 0 0 auto;}
+.pill .val{font-weight: 800;
+  font-size: clamp(14px, 2.2vw, 20px); /* 小螢幕自動縮字，大螢幕最多 20px */
+  line-height: 1;                      /* 防止行高把內容撐出框 */
+  text-align: right;
+  max-width: 60%;                      /* 留空間給左側標籤 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;}
 
 /* ====== 壘包菱形（SVG） ====== */
 #diamond{
