@@ -22,23 +22,18 @@
     <section class="card">
       <h2>場上狀態</h2>
       <div class="state-wrap">
-        <!-- 左：壘包菱形 -->
+        <!-- 上：壘包圖 -->
         <div id="bases"><!-- SVG 由 JS 注入 --></div>
     
-        <!-- 右：資訊區 -->
+        <!-- 下：資訊區 -->
         <div class="side">
-          <!-- 上排：兩個小膠囊並排 -->
           <div class="row">
             <div class="pill small"><span class="label">局數</span><span class="val" id="pillInning">—</span></div>
             <div class="pill small"><span class="label">攻擊方</span><span class="val" id="pillBat">—</span></div>
           </div>
-    
-          <!-- 下排：出局數三顆紅燈 -->
           <div class="outs">
             <span class="label">出局數</span>
-            <div class="dots">
-              <i id="out1"></i><i id="out2"></i>
-            </div>
+            <div class="dots"><i id="out1"></i><i id="out2"></i></div>
           </div>
         </div>
       </div>
