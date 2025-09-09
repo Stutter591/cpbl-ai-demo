@@ -50,23 +50,24 @@ main{
 #scoreboard tr:last-child td{border-bottom:none}
 #scoreboard td:first-child{text-align:left; padding-left:16px; font-weight:700}
 
-/* ===== 場上狀態布局：左(菱形) + 右(資訊區) 不溢出 ===== */
-.state-wrap{display:grid;grid-template-columns: 1fr 280px;  /* 右邊固定 280，避免擠爆 */
-  gap:18px; align-items:center;}
+/* ===== 場上狀態布局：上(壘包) + 下(資訊區) 不溢出 ===== */
+.state-wrap{display:flex;flex-direction:column;gap:18px;align-items:center;   /* 讓上方壘包置中 */}
 @media (max-width: 1200px){
   .state-wrap{ grid-template-columns: 1fr 260px; }}
 @media (max-width: 900px){
   .state-wrap{ grid-template-columns: 1fr; } /* 手機改上下 */}
 
-/* 右側資訊區 */
-.side{ display:flex; flex-direction:column; gap:14px; min-width:0; }
-.side .row{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+/* 下方資訊區 */
+.side{width:100%;display:flex;flex-direction:column;gap:12px;min-width:0;}
+/* 第一排：兩個小膠囊並排 */
+.side .row{display:grid;grid-template-columns: 1fr 1fr;gap:12px;}
 
 /* 小膠囊：不換行、不超框 */
 .pill{
   border:1px solid var(--card-border);
   background:rgba(255,255,255,.03);
-  border-radius:14px; padding:10px 12px;
+  border-radius:14px;
+  padding:10px 12px;
   display:flex; align-items:center; justify-content:space-between;
   gap:10px; width:100%; box-sizing:border-box;
 }
@@ -77,10 +78,12 @@ main{
   font-size: clamp(14px, 2.2vw, 18px);
 }
 
-/* 出局數紅燈 */
-.outs{ display:flex; align-items:center; justify-content:space-between;
-       border:1px solid var(--card-border); background:rgba(255,255,255,.03);
-       border-radius:14px; padding:10px 12px; }
+/* 第二排：出局數紅燈（靠右） */
+.outs{
+  display:flex; align-items:center; justify-content:space-between;
+  border:1px solid var(--card-border); background:rgba(255,255,255,.03);
+  border-radius:14px; padding:10px 12px;
+}
 .outs .label{ color:var(--muted); }
 .outs .dots{ display:flex; gap:10px; }
 .outs .dots i{
@@ -90,9 +93,13 @@ main{
 .outs .dots i.on{
   background:#ef4444; box-shadow:0 0 10px rgba(239,68,68,.7), inset 0 0 0 2px #991b1b;
 }
+/* RWD：小螢幕讓壘包縮小一點避免超框 */
+@media (max-width: 768px){
+  #diamond{ width:240px; height:240px; }
+}
 
 /* ====== 壘包菱形（SVG） ====== */
-#diamond{ width:260px; height:260px; display:block; margin:0 auto; }
+#diamond{ width:300px; height:300px; display:block; margin:0 auto; }
 .base-node{ stroke:#2c3e5f; stroke-width:2; fill:var(--base-off);
             filter: drop-shadow(0 2px 4px rgba(0,0,0,.35)); }
 .base-node.on{ fill:var(--base-on); stroke:#0f3b25 }
