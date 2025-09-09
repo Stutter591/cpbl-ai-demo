@@ -29,11 +29,10 @@ function renderScoreboard(linescore){
   document.getElementById("scoreboard").innerHTML=html;
 }
 function renderBases(bases){
-  document.getElementById("bases").innerHTML=`
-    <div class="base home"></div>
-    <div class="base first ${bases.on1?'active':''}"></div>
-    <div class="base second ${bases.on2?'active':''}"></div>
-    <div class="base third ${bases.on3?'active':''}"></div>
+  document.getElementById("bases").innerHTML = `
+    <div class="base second ${bases.on2 ? 'active' : ''}" aria-label="二壘"></div>
+    <div class="base first  ${bases.on1 ? 'active' : ''}" aria-label="一壘"></div>
+    <div class="base third  ${bases.on3 ? 'active' : ''}" aria-label="三壘"></div>
   `;
 }
 function renderStatus(state){
