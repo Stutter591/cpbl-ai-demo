@@ -36,21 +36,29 @@ function renderScoreboard(linescore){
    const on3 = bases.on3 ? 'on' : '';
    document.getElementById('bases').innerHTML = `
    <svg id="diamond" viewBox="0 0 260 260" aria-label="壘包菱形">
-      <!-- 外框菱形 -->
-      <path class="diamond-line" d="M130,24 L236,130 L130,236 L24,130 Z"/>
-      <!-- 二壘 -->
-      <rect x="118" y="36" width="24" height="24" transform="rotate(45 130 48)" class="base-node ${on2}" />
-      <!-- 一壘 -->
-      <rect x="212" y="118" width="24" height="24" transform="rotate(45 224 130)" class="base-node ${on1}" />
-      <!-- 三壘 -->
-      <rect x="36" y="118" width="24" height="24" transform="rotate(45 48 130)" class="base-node ${on3}" />
+     <path class="diamond-line" d="M130,24 L236,130 L130,236 L24,130 Z"/>
+     <rect x="118" y="36" width="24" height="24" transform="rotate(45 130 48)" class="base-node ${on2}" />
+     <rect x="212" y="118" width="24" height="24" transform="rotate(45 224 130)" class="base-node ${on1}" />
+     <rect x="36" y="118" width="24" height="24" transform="rotate(45 48 130)" class="base-node ${on3}" />
    </svg>`;
 }
-function renderStatus(state){
-  document.getElementById("pillInning").textContent = `${state.inning}${state.half==='TOP'?'上':'下'}`;
-  document.getElementById("pillOuts").textContent = state.outs;
-  document.getElementById("pillBat").textContent = state.batting === 'away' ? 'Away' : 'Home';
+ function renderStatus(state){
+   // 膠囊：局數、攻擊方
+   const half = state.half === 'TOP' ? '上' : '下';
+   const batting = state.batting === 'away' ? 'Away' : 'Home';
+   document.getElementById("pillInning").textContent = `${state.inning}${half}`;
+   document.getElementById("pillBat").textContent = batting;
+
+   // 紅燈：出局數（0~3；通常 0~2 亮）
+   const o1 = document.getElementById('out1');
+   const o2 = document.getElementById('out2');
+   const o3 = document.getElementById('out3');
+   [o1,o2,o3].forEach(el => el.classList.remove('on'));
+   if (state.outs >= 1) o1.classList.add('on');
+   if (state.outs >= 2) o2.classList.add('on');
+   if (state.outs >= 3) o3.classList.add('on'); // 幾乎不會在半局內顯示，但保險
 }
+
 function renderTimeline(frames, idx){
   const log=frames.map((f,i)=>`${i===idx?'👉 ':''}${f.ts||'--:--'} | ${f.event.code} | ${f.before.bases}/${f.before.outs} → ${f.after.bases}/${f.after.outs} | runs:${f.runs}`).join("\n");
   document.getElementById("timeline").textContent=log;
