@@ -8,33 +8,40 @@
 <body>
   <header>
     <h1>⚾ AI 棒球賽事播報</h1>
-    <nav>
-      <button id="liveBtn">比賽進行中</button>
-      <button id="replayBtn">比賽紀錄回放</button>
-    </nav>
-    <!-- 版本顯示區 -->
-    <small id="version" style="margin-left:auto;opacity:.8"></small>
+    <small id="version"></small>
   </header>
 
   <main>
-    <section id="scoreboard"></section>
-    <section id="bases"></section>
-    <section id="status"></section>
+    <!-- 左：記分板 -->
+    <section class="card">
+      <h2 class="score-title">記分板（逐局）</h2>
+      <div id="scoreboard"></div>
+    </section>
+
+    <!-- 右：場上狀態（壘包菱形 + 資訊膠囊） -->
+    <section class="card">
+      <h2>場上狀態</h2>
+      <div class="state-grid">
+        <div id="bases"><!-- SVG 由 JS 注入 --></div>
+        <div>
+          <div class="pill"><span class="label">局數</span><span class="val" id="pillInning">—</span></div>
+          <div class="pill"><span class="label">出局數</span><span class="val" id="pillOuts">—</span></div>
+          <div class="pill"><span class="label">攻擊方</span><span class="val" id="pillBat">—</span></div>
+        </div>
+      </div>
+    </section>
   </main>
-  <section id="controls" style="display:flex;gap:.5rem;align-items:center;padding:0 1rem;">
+
+  <!-- 播放控制與時間軸（若已經有就保留即可） -->
+  <section id="controls">
     <button id="btnPrev">⏮ 上一步</button>
     <button id="btnPlay">▶️ 播放</button>
     <button id="btnNext">⏭ 下一步</button>
     <label style="margin-left:8px;">速度
-      <select id="speed">
-        <option value="1200">慢</option>
-        <option value="800" selected>中</option>
-        <option value="400">快</option>
-      </select>
+      <select id="speed"><option value="1200">慢</option><option value="800" selected>中</option><option value="400">快</option></select>
     </label>
     <span id="nowEvent" style="margin-left:auto;opacity:.8;font-family:monospace;"></span>
   </section>
-
   <aside id="timeline"></aside>
 
   <script type="module" src="app.js"></script>
