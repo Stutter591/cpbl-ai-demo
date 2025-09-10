@@ -144,7 +144,8 @@ main{
   padding:8px 12px; border-radius:10px; cursor:pointer;
 }
 #controls select{background:#0e223a; color:var(--text); border:1px solid var(--card-border); border-radius:8px; padding:6px}
-#timeline{
+#timeline,
+#eventList {
   white-space:pre-wrap; font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
   background:var(--card); border:1px solid var(--card-border);
   border-radius:18px; padding:16px; margin:0 16px 16px;
