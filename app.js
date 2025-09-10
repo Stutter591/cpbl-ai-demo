@@ -49,6 +49,16 @@ function renderScoreboard(linescore){
    if (dots && !document.getElementById('out1') && !document.getElementById('out2')) {
      dots.innerHTML = '<i id="out1"></i><i id="out2"></i>';}
 }
+// 好壞球顯示
+function ensureCountDots(){
+  // 壞球 4 燈
+  const balls = document.querySelector('.dots-balls');
+  if (balls && !document.getElementById('b1')) {
+    balls.innerHTML = '<i id="b1"></i><i id="b2"></i><i id="b3"></i><i id="b4"></i>';}
+  // 好球 3 燈
+  const strikes = document.querySelector('.dots-strikes');
+  if (strikes && !document.getElementById('s1')) {
+    strikes.innerHTML = '<i id="s1"></i><i id="s2"></i><i id="s3"></i>';}}
 // 更新「局數 / 攻擊方」＋ 2 顆紅燈
  function renderStatus(state){
    // 膠囊：局數、攻擊方
@@ -60,6 +70,18 @@ function renderScoreboard(linescore){
    if (pillBat) pillBat.textContent = batting;
    // 確保有兩顆燈
    ensureOutDots();
+   // ✅ 壞球 4 燈
+   const balls = Math.max(0, Math.min(4, state.count?.balls ?? 0));
+   ['b1','b2','b3','b4'].forEach((id, idx)=>{
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('on', balls >= idx+1);
+   });
+   // ✅ 好球 3 燈（兩好後界外球不再增加，邏輯已在 rules.js）
+   const strikes = Math.max(0, Math.min(3, state.count?.strikes ?? 0));
+   ['s1','s2','s3'].forEach((id, idx)=>{
+     const el = document.getElementById(id);
+     if (el) el.classList.toggle('on', strikes >= idx+1);
+   });
    // 出局數紅燈：只兩顆（0/1/2）
    const o1 = document.getElementById('out1'); 
    const o2 = document.getElementById('out2');
