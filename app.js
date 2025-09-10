@@ -1,4 +1,4 @@
-// add.js
+// app.js — no timeline; show event text + counter
 import { initialState, applyEvent } from './rules.js';
 
 const tz = 'Asia/Taipei';
@@ -43,7 +43,7 @@ function renderBases(bases){
    </svg>`;
 }
 
-// --- 燈具保險：若找不到就自動補上 -------------------------------------------
+// --- ensure dots ---
 function ensureOutDots() {
   const dots = document.querySelector('.outs .dots');
   if (dots && (!document.getElementById('out1') || !document.getElementById('out2'))) {
@@ -61,9 +61,8 @@ function ensureCountDots(){
   }
 }
 
-// --- 場上狀態（局數/攻擊方 + 好壞球燈 + 出局燈） ---------------------------
+// --- status (inning/batting + B/S + outs) ---
 function renderStatus(state){
-  // 局數 / 攻擊方
   const half = state.half === 'TOP' ? '上' : '下';
   const batting = state.batting === 'away' ? 'Away' : 'Home';
   const pillInning = document.getElementById("pillInning");
@@ -71,61 +70,56 @@ function renderStatus(state){
   if (pillInning) pillInning.textContent = `${state.inning}${half}`;
   if (pillBat) pillBat.textContent = batting;
 
-  // 燈具補齊
   ensureOutDots();
   ensureCountDots();
 
-  // 壞球 4 燈
   const balls = Math.max(0, Math.min(4, state.count?.balls ?? 0));
   ['b1','b2','b3','b4'].forEach((id, idx)=>{
     const el = document.getElementById(id);
     if (el) el.classList.toggle('on', balls >= idx+1);
   });
-
-  // 好球 3 燈
   const strikes = Math.max(0, Math.min(3, state.count?.strikes ?? 0));
   ['s1','s2','s3'].forEach((id, idx)=>{
     const el = document.getElementById(id);
     if (el) el.classList.toggle('on', strikes >= idx+1);
   });
 
-  // 出局數 2 燈
   const o1 = document.getElementById('out1');
   const o2 = document.getElementById('out2');
   if (o1 && o2) {
     o1.classList.toggle('on', state.outs >= 1);
     o2.classList.toggle('on', state.outs >= 2);
-  } else {
-    console.warn('outs dots not found in DOM');
   }
 }
 
+// --- show current event text + counter ---
+function renderCounter(idx,total){
+  const el=document.getElementById('evtCounter');
+  if(!el) return;
+  el.textContent = `事件：${Math.max(0,idx+1)} / ${total}`;
+}
+function formatAdvances(ev) {
+  const adv = ev?.meta?.advances;
+  if (!Array.isArray(adv) || adv.length === 0) return "";
+  return " [" + adv.map(a => `${a.from}→${a.to}`).join(",") + "]";
+}
 function renderNow(frames, idx){
   const el=document.getElementById('nowEvent');
   if(!el) return;
-  if(idx<0){ el.textContent="等待播放…"; return; }
+  if(idx<0){ el.textContent="等待播放…"; renderCounter(-1, frames.length); return; }
   const f=frames[idx];
-  el.textContent=`#${idx+1} ${f.ts||'--:--'} ${f.event.code}  ${f.before.bases}/${f.before.outs}→${f.after.bases}/${f.after.outs}`;
-}
-//advances的描述
-function formatAdvances(ev) {
-  if (!ev.meta?.advances) return "";
-  return ev.meta.advances.map(a => `${a.runner}:${a.from}->${a.to}`).join(",");
+  const advTxt = formatAdvances(f.event);
+  // 顯示「中文事件敘述 event」；若沒有就退回 code
+  const desc = f.event.event || f.event.code;
+  el.textContent=`#${idx+1} ${f.ts||'--:--'} ${desc}${advTxt}  ${f.before.bases}/${f.before.outs}→${f.after.bases}/${f.after.outs}`;
+  renderCounter(idx, frames.length);
 }
 
-function renderTimeline(frames, idx){
-  const log=frames.map((f,i)=>{
-    const advText = formatAdvances(f.event);
-    return `${i===idx?'👉 ':''}${f.ts||'--:--'} | ${f.event.code}${advText?(" ["+advText+"]"):""} | ${f.before.bases}/${f.before.outs} → ${f.after.bases}/${f.after.outs} | runs:${f.runs}`;
-  }).join("\n");
-  document.getElementById("timeline").textContent=log;
-}
-/* 播放器狀態與快照 */
+/* 播放器狀態 */
 let frames=[], current=-1, timer=null;
 let snapshotPerStep=[];
 
 function takeSnapshot(state){
-  // ✅ 一併保存 count，回放時好/壞球燈才能正確顯示
   return JSON.parse(JSON.stringify({
     bases: state.bases,
     outs: state.outs,
@@ -144,7 +138,6 @@ function showStep(idx){
   renderScoreboard(snap.linescore);
   renderBases(snap.bases);
   renderStatus(snap);
-  renderTimeline(frames, idx);
   renderNow(frames, idx);
 }
 
@@ -163,7 +156,6 @@ function next(){ pause(); if(current<frames.length-1) showStep(current+1); }
 
 async function main(){
   try{
-    // 先把燈具補齊，避免第一次 renderStatus 找不到元素
     ensureOutDots();
     ensureCountDots();
 
@@ -172,7 +164,6 @@ async function main(){
     const state=initialState();
     frames=[]; snapshotPerStep=[]; current=-1;
 
-    // 以「半局」為 key 的逐局得分差，避免換半局時 runs 顯示異常
     let prevRuns=0;
     let lastKey = `${state.batting}:${state.inning}`;
 
@@ -187,7 +178,7 @@ async function main(){
 
       frames.push({
         ts: ev.ts,
-        event: { code: ev.code },
+        event: { code: ev.code, event: ev.event, meta: ev.meta }, // 帶上中文 event
         before,
         after,
         runs: cur - prevRuns
@@ -201,8 +192,7 @@ async function main(){
     renderScoreboard({away:[],home:[]});
     renderBases({on1:false,on2:false,on3:false});
     renderStatus({inning:1,half:"TOP",outs:0,batting:"away",count:{balls:0,strikes:0}});
-    renderTimeline(frames, -1);
-    renderNow(frames, -1);
+    renderNow(frames, -1); // 也會刷新 counter
 
     // 綁定控制
     document.getElementById('btnPlay').onclick=()=> (timer? pause(): play());
@@ -210,8 +200,9 @@ async function main(){
     document.getElementById('btnNext').onclick=next;
   }catch(e){
     setVersionText('資料版本：讀取失敗');
-    const tl = document.getElementById('timeline');
-    if (tl) tl.textContent=`❌ 載入或解析 events.json 失敗：${e.message}`;
+    // Timeline 已移除，錯誤顯示在 nowEvent
+    const el = document.getElementById('nowEvent');
+    if (el) el.textContent=`❌ 載入或解析 events.json 失敗：${e.message}`;
     console.error(e);
   }
 }
