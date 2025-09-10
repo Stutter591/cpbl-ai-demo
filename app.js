@@ -100,10 +100,6 @@ function renderStatus(state){
   }
 }
 
-function renderTimeline(frames, idx){
-  const log=frames.map((f,i)=>`${i===idx?'👉 ':''}${f.ts||'--:--'} | ${f.event.code} | ${f.before.bases}/${f.before.outs} → ${f.after.bases}/${f.after.outs} | runs:${f.runs}`).join("\n");
-  document.getElementById("timeline").textContent=log;
-}
 function renderNow(frames, idx){
   const el=document.getElementById('nowEvent');
   if(!el) return;
