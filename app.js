@@ -108,12 +108,26 @@ function renderNow(frames, idx){
 function renderEventList(frames, currentIdx){
   const el = document.getElementById('eventList');
   if(!el) return;
-  const lines = frames.map((f,i)=>{
-    const mark = (i===currentIdx) ? '👉 ' : '   ';
+
+  if (frames.length === 0) {
+    el.textContent = "";
+    return;
+  }
+
+  // 計算顯示視窗：最多 10 筆，優先顯示「以目前事件為結尾」的視窗
+  let end = (currentIdx >= 0) ? Math.min(frames.length, currentIdx + 1) : Math.min(frames.length, 10);
+  let start = Math.max(0, end - 10);
+
+  const slice = frames.slice(start, end);
+
+  const lines = slice.map((f, iInSlice) => {
+    const realIndex = start + iInSlice;             // 真實事件序號
+    const mark = (realIndex === currentIdx) ? '👉 ' : '   ';
     const desc = f.event.event || f.event.code;
     const advTxt = formatAdvances(f.event);
-    return `${mark}#${i+1} ${f.ts||'--:--'}  ${desc}  ${f.before.bases}/${f.before.outs} → ${f.after.bases}/${f.after.outs}${advTxt} | runs:${f.runs}`;
+    return `${mark}#${realIndex+1} ${f.ts||'--:--'}  ${desc}  ${f.before.bases}/${f.before.outs} → ${f.after.bases}/${f.after.outs}${advTxt} | runs:${f.runs}`;
   });
+
   el.textContent = lines.join("\n");
 }
 
