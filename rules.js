@@ -17,7 +17,8 @@
  *  "K"|"GO"|"FO"|"IF"|"SF"|"SAC"|"FC"|
  *  "DP"|"TP"|
  *  "SB2"|"SB3"|"SBH"|"CS2"|"CS3"|"PO1"|"PO2"|"PO3"|
- *  "WP"|"PB"|"BK"
+ *  "WP"|"PB"|"BK"|
+ *  "B"|"S"|"F"
  * } EventCode
  */
 
@@ -42,7 +43,7 @@
 
 /** @typedef {{
  * inning:number, half:Half, outs:number, bases:Bases,
- * linescore:Linescore, batting:Side
+ * linescore:Linescore, batting:Side, count:{balls:number,strikes:number}
  * }} GameState */
 
 export function initialState() {
@@ -52,7 +53,8 @@ export function initialState() {
     outs: 0,
     bases: { on1:false, on2:false, on3:false },
     linescore: { away:[], home:[] },
-    batting: "away"
+    batting: "away",
+    count: { balls: 0, strikes: 0 }   // ✅ 新增：球數
   };
 }
 
@@ -63,9 +65,16 @@ function scoreRun(state, n) {
   arr[state.inning - 1] += n;
 }
 
+function resetCount(state) {
+  if (!state.count) state.count = { balls: 0, strikes: 0 };
+  state.count.balls = 0;
+  state.count.strikes = 0;
+}
+
 function switchHalfInning(state) {
   state.outs = 0;
   state.bases = { on1:false, on2:false, on3:false };
+  resetCount(state); // ✅ 換半局清空球數
   if (state.half === "TOP") { state.half = "BOTTOM"; state.batting = "home"; }
   else { state.half = "TOP"; state.batting = "away"; state.inning += 1; }
 }
@@ -114,8 +123,6 @@ function applyHit(state, kind) {
 
   if (kind === "1B") {
     if (b.on3) runs += advanceOne(b, 3, 'H');
-    const n3 = b.on2 ? 3 : 0;
-    const n2 = b.on1 ? 2 : 0;
     if (b.on2) advanceOne(b, 2, 3);
     if (b.on1) advanceOne(b, 1, 2);
     b.on1 = true; // batter to 1st
@@ -149,10 +156,98 @@ export function applyEvent(state, ev) {
 
   const endIf3 = () => (state.outs >= 3) && (switchHalfInning(state), true);
 
+  // 小工具：先處理 meta.advances（from/to；to=4 表本壘；支援 from=0=打者）
+  function applyAdvancesPre(advList) {
+    if (!advList || !Array.isArray(advList) || advList.length === 0) return new Set();
+    // 先從 3,2,1,0 的順序推，避免覆蓋
+    const list = advList.slice().sort((a,b)=>((b?.from ?? 0) - (a?.from ?? 0)));
+    let runs = 0;
+    const handledFrom = new Set();
+    for (const adv of list) {
+      if (!adv || typeof adv.to === 'undefined') continue;
+      const from = (typeof adv.from === 'number') ? adv.from : 0;  // 0=BR
+      const toBase = (adv.to === 4) ? 'H' : adv.to;
+      runs += advanceOne(b, from, toBase);
+      handledFrom.add(from);
+    }
+    if (runs) scoreRun(state, runs);
+    return handledFrom; // 回傳已經由 advances 處理過的 from 壘位集合
+  }
+
   switch (code) {
-    // 安打類
-    case "1B": case "2B": case "3B": case "HR":
-      applyHit(state, code); break;
+
+    /* ========= 投球事件：維護計數 ========= */
+    case "B": { // 壞球
+      if (!state.count) state.count = { balls: 0, strikes: 0 };
+      state.count.balls = Math.min(4, state.count.balls + 1);
+      if (state.count.balls >= 4) {
+        const forced = forceAdvanceChain(b);
+        scoreRun(state, forced);
+        b.on1 = true;            // 打者上一壘
+        resetCount(state);       // 打席結束
+      }
+      break;
+    }
+
+    case "S": { // 好球
+      if (!state.count) state.count = { balls: 0, strikes: 0 };
+      state.count.strikes = Math.min(3, state.count.strikes + 1);
+      if (state.count.strikes >= 3) {
+        out(state, 1);           // 三振出局
+        resetCount(state);       // 打席結束
+      }
+      break;
+    }
+
+    case "F": { // 界外：兩好後不再增加
+      if (!state.count) state.count = { balls: 0, strikes: 0 };
+      if (state.count.strikes < 2) {
+        state.count.strikes += 1;
+      }
+      break; // 不結束打席
+    }
+
+    /* ========= 打席/比賽事件 ========= */
+
+    // 安打類（若帶 advances：先依 advances 執行，之後再對「未指定者」套用預設推進）
+    case "1B":
+    case "2B":
+    case "3B":
+    case "HR": {
+      const beforeBases = JSON.parse(JSON.stringify(b)); // 事件發生前的壘包快照
+      const step = (code === "1B" ? 1 : code === "2B" ? 2 : code === "3B" ? 3 : 4);
+
+      // 1) 先處理 meta.advances（優先）
+      const handledFrom = applyAdvancesPre(meta.advances);
+
+      // 2) 對「未在 advances 指定」的跑者，依照 before 狀態套用預設推進
+      let addRuns = 0;
+
+      // 依 3→2→1 順序避免覆蓋
+      if (beforeBases.on3 && !handledFrom.has(3)) {
+        const dest = 3 + step;
+        addRuns += advanceOne(b, 3, dest >= 4 ? 'H' : dest);
+      }
+      if (beforeBases.on2 && !handledFrom.has(2)) {
+        const dest = 2 + step;
+        addRuns += advanceOne(b, 2, dest >= 4 ? 'H' : dest);
+      }
+      if (beforeBases.on1 && !handledFrom.has(1)) {
+        const dest = 1 + step;
+        addRuns += advanceOne(b, 1, dest >= 4 ? 'H' : dest);
+      }
+
+      // 打者（BR: from=0）若未由 advances 指定，依預設上壘/回本
+      if (!handledFrom.has(0)) {
+        if (step >= 4) addRuns += advanceOne(b, 0, 'H');
+        else addRuns += advanceOne(b, 0, step);
+      }
+
+      if (addRuns) scoreRun(state, addRuns);
+
+      resetCount(state); // 打席結束
+      break;
+    }
 
     // 四壞 / 故四 / 觸身
     case "BB":
@@ -160,65 +255,60 @@ export function applyEvent(state, ev) {
     case "HBP": {
       const forced = forceAdvanceChain(b);
       scoreRun(state, forced);
-      b.on1 = true; // 打者佔一壘
+      b.on1 = true;                      // 打者佔一壘
+      resetCount(state);                 // 打席結束
       break;
     }
 
     // 三振
-    case "K": { out(state, 1); break; }
+    case "K": {
+      out(state, 1);
+      resetCount(state);                 // 打席結束
+      break;
+    }
 
     // 滾地球出局（GO）
-    // 預設：打者在一壘被封殺（+1 出局），其他跑者僅強迫進壘
-    // 若 meta.doublePlay=true 或 outsOn 指定，則做 DP（常見 6-4-3：R1 與打者出局）
     case "GO": {
-      // 先處理 DP
       if (meta.doublePlay && state.outs <= 1 && (b.on1 || meta.outsOn?.includes("R1"))) {
-        // 預設 DP：R1 出局 + 打者出局
-        // 若有 R2 也可能被傳封（二→一）但簡化成 6-4-3
-        // 先抓 R1，再抓打者
         if (b.on1) { b.on1 = false; }
         state.outs += 2;
-        // 其他跑者：只有被強迫才推進（R2->3, R3->H）
         let runs = 0;
-        if (b.on3 && b.on2) { runs += advanceOne(b, 3, 'H'); } // 三→本（被 R2 強迫？否，DP 情境多為抓一二）
-        if (b.on2 && !b.on3) { /* R2 不強迫，通常停 */ }
-        // 打者在一壘出局，不上壘
-        if (endIf3()) break;
+        if (b.on3 && b.on2) { runs += advanceOne(b, 3, 'H'); }
+        if (endIf3()) { resetCount(state); break; }
         if (runs) scoreRun(state, runs);
       } else {
-        // 單出局：打者出局 + 強迫進壘
         state.outs += 1;
-        if (endIf3()) break;
+        if (endIf3()) { resetCount(state); break; }
         const forced = forceAdvanceChain(b);
         scoreRun(state, forced);
-        // 打者出局，不佔壘
       }
+      resetCount(state);                 // 打席結束
       break;
     }
 
     // 飛球出局（FO）
-    // 預設：打者出局，跑者不動。
-    // 若 meta.tagUp 指定，則在出局後進行補位推進（R3:1 → 得分）
     case "FO": {
       state.outs += 1;
-      if (endIf3()) break;
+      if (endIf3()) { resetCount(state); break; }
       const tag = meta.tagUp || {};
       let runs = 0;
       if (tag.R3 && b.on3) runs += advanceOne(b, 3, tag.R3 >= 1 ? 'H' : 3);
       if (tag.R2 && b.on2) advanceOne(b, 2, tag.R2 >= 1 ? 3 : 2);
       if (tag.R1 && b.on1) advanceOne(b, 1, tag.R1 >= 1 ? 2 : 1);
       if (runs) scoreRun(state, runs);
+      resetCount(state);                 // 打席結束
       break;
     }
 
-    // 內野飛球必死（IF） — 打者出局、跑者不能偷進（保持）
+    // 內野飛球必死（IF）
     case "IF": {
       state.outs += 1;
       endIf3();
+      resetCount(state);                 // 打席結束
       break;
     }
 
-    // 高飛犧牲打（SF）：打者出局 + 三壘跑者回本壘得分（若出局後未第三個出局）
+    // 高飛犧牲打（SF）
     case "SF": {
       state.outs += 1;
       if (state.outs < 3 && b.on3) {
@@ -226,20 +316,22 @@ export function applyEvent(state, ev) {
         b.on3 = false;
       }
       endIf3();
+      resetCount(state);                 // 打席結束
       break;
     }
 
-    // 犧牲觸擊（SAC）：打者出局 + 強迫跑者前進一個壘（滿壘則擠回 1 分）
+    // 犧牲觸擊（SAC）
     case "SAC": {
       state.outs += 1;
-      if (endIf3()) break;
-      const forced = forceAdvanceChain(b);
-      scoreRun(state, forced);
+      if (!endIf3()) {
+        const forced = forceAdvanceChain(b);
+        scoreRun(state, forced);
+      }
+      resetCount(state);                 // 打席結束
       break;
     }
 
-    // 野手選擇（FC）：預設抓前導跑者，打者安全上一壘
-    // - 如果有 R3 → 抓 R3；否則抓 R2；否則抓 R1；都沒有就打者上一壘
+    // 野手選擇（FC）
     case "FC": {
       let outLead = meta.outLead; // "R3"/"R2"/"R1"
       if (!outLead) outLead = b.on3 ? "R3" : (b.on2 ? "R2" : (b.on1 ? "R1" : null));
@@ -248,16 +340,14 @@ export function applyEvent(state, ev) {
       else if (outLead === "R2" && b.on2) b.on2 = false;
       else if (outLead === "R1" && b.on1) b.on1 = false;
 
-      // 打者安全上一壘（若那壘有人就順推一下，不計分）
-      if (!b.on1) b.on1 = true; else { /* 罕見擠壘，可強迫鏈，但簡化先不推 */ }
-
+      if (!b.on1) b.on1 = true; // 打者上一壘（簡化）
       state.outs += 1;
       endIf3();
+      resetCount(state);                 // 打席結束
       break;
     }
 
     // 雙殺 / 三殺
-    // DP：預設抓 R1 + 打者（滾地雙殺 6-4-3），其他跑者維持；若 meta 指定 outsOn 則依據
     case "DP": {
       if (state.outs <= 1) {
         if (meta && Array.isArray(meta.outsOn)) {
@@ -268,25 +358,24 @@ export function applyEvent(state, ev) {
           }
           state.outs += 2;
         } else {
-          // 默認 R1 + 打者
           if (b.on1) b.on1 = false;
           state.outs += 2;
         }
       } else {
-        // 2 出局時無法再雙殺到 4 出局，做單出局保底
         state.outs += 1;
       }
       endIf3();
+      resetCount(state);                 // 打席結束
       break;
     }
 
     case "TP": {
       state.outs += 3;
-      switchHalfInning(state);
+      switchHalfInning(state);           // 內含 resetCount
       break;
     }
 
-    // 盜壘 / 阻殺 / 牽制
+    // 盜壘 / 阻殺 / 牽制（不結束打席）
     case "SB2": { if (b.on1 && !b.on2) { b.on1=false; b.on2=true; } break; }
     case "SB3": { if (b.on2 && !b.on3) { b.on2=false; b.on3=true; } break; }
     case "SBH": { if (b.on3) { b.on3=false; scoreRun(state,1); } break; }
@@ -296,7 +385,7 @@ export function applyEvent(state, ev) {
     case "PO2": { if (b.on2) { b.on2=false; out(state,1); } break; }
     case "PO3": { if (b.on3) { b.on3=false; out(state,1); } break; }
 
-    // 暴投/捕逸/投手犯規（簡化：所有跑者+1 壘；三壘者得分）
+    // 暴投/捕逸/投手犯規（不結束打席）
     case "WP":
     case "PB":
     case "BK": {
@@ -430,5 +519,21 @@ export function runSelfTests() {
     applyEvent(s,{code:"K"});
     applyEvent(s,{code:"K"});
     return {pass: s.half==="BOTTOM" && s.outs===0 && !s.bases.on1, msg: JSON.stringify(s)};
+  });
+
+  // 新增：球數行為驗證
+  T("18) Balls → BB auto walk & reset count", (s)=>{
+    applyEvent(s,{code:"B"});
+    applyEvent(s,{code:"B"});
+    applyEvent(s,{code:"B"});
+    applyEvent(s,{code:"B"}); // 觸發保送
+    return {pass: s.bases.on1===true && s.count.balls===0 && s.count.strikes===0, msg: JSON.stringify(s)};
+  });
+
+  T("19) Strikes → K & reset count", (s)=>{
+    applyEvent(s,{code:"S"});
+    applyEvent(s,{code:"S"});
+    applyEvent(s,{code:"S"}); // 三振
+    return {pass: s.outs===1 && s.count.balls===0 && s.count.strikes===0, msg: JSON.stringify(s)};
   });
 }

@@ -1,3 +1,4 @@
+// app.js — no timeline; show event text + counter
 import { initialState, applyEvent } from './rules.js';
 
 const tz = 'Asia/Taipei';
@@ -14,7 +15,7 @@ async function loadEventsWithMeta(){
   let json; try{ json=JSON.parse(text);}catch(e){ throw new Error(`events.json 非合法 JSON：${e.message}`);}
   const lm=res.headers.get('Last-Modified');
   if(lm){ setVersionText(`資料版本：${fmt.format(new Date(lm))}`); }
-  else{ setVersionText(`資料版本：內容雜湊 ${await sha256Short(text)}`); }
+  else { setVersionText(`資料版本：內容雜湊 ${await sha256Short(text)}`); }
   return json;
 }
 
@@ -28,13 +29,12 @@ function renderScoreboard(linescore){
   html+=row("Away",linescore.away||[]); html+=row("Home",linescore.home||[]); html+="</table>";
   document.getElementById("scoreboard").innerHTML=html;
 }
- function renderBases(bases){
-  // 以 260x260 畫布、菱形四角：上(130,24) 右(236,130) 下(130,236) 左(24,130)
-  // 壘位：二壘=上端附近、一壘=右端附近、三壘=左端附近
-   const on1 = bases.on1 ? 'on' : '';
-   const on2 = bases.on2 ? 'on' : '';
-   const on3 = bases.on3 ? 'on' : '';
-   document.getElementById('bases').innerHTML = `
+
+function renderBases(bases){
+  const on1 = bases.on1 ? 'on' : '';
+  const on2 = bases.on2 ? 'on' : '';
+  const on3 = bases.on3 ? 'on' : '';
+  document.getElementById('bases').innerHTML = `
    <svg id="diamond" viewBox="0 0 260 260" aria-label="壘包菱形">
      <path class="diamond-line" d="M130,24 L236,130 L130,236 L24,130 Z"/>
      <rect x="118" y="36" width="24" height="24" transform="rotate(45 130 48)" class="base-node ${on2}" />
@@ -43,61 +43,101 @@ function renderScoreboard(linescore){
    </svg>`;
 }
 
-// 若找不到 out1/out2，就自動補上，避免 null
- function ensureOutDots() {
-   const dots = document.querySelector('.outs .dots');
-   if (dots && !document.getElementById('out1') && !document.getElementById('out2')) {
-     dots.innerHTML = '<i id="out1"></i><i id="out2"></i>';}
+// --- ensure dots ---
+function ensureOutDots() {
+  const dots = document.querySelector('.outs .dots');
+  if (dots && (!document.getElementById('out1') || !document.getElementById('out2'))) {
+    dots.innerHTML = '<i id="out1"></i><i id="out2"></i>';
+  }
 }
-// 更新「局數 / 攻擊方」＋ 2 顆紅燈
- function renderStatus(state){
-   // 膠囊：局數、攻擊方
-   const half = state.half === 'TOP' ? '上' : '下';
-   const batting = state.batting === 'away' ? 'Away' : 'Home';
-   const pillInning = document.getElementById("pillInning");
-   const pillBat = document.getElementById("pillBat");
-   if (pillInning) pillInning.textContent = `${state.inning}${half}`;
-   if (pillBat) pillBat.textContent = batting;
-   // 確保有兩顆燈
-   ensureOutDots();
-   // 出局數紅燈：只兩顆（0/1/2）
-   const o1 = document.getElementById('out1'); 
-   const o2 = document.getElementById('out2');
-   if (o1 && o2) {
-    o1.classList.toggle('on', state.outs >= 1);
-    o2.classList.toggle('on', state.outs >= 2);
-  } else {
-    // 若還是抓不到，避免拋錯
-    console.warn('outs dots not found in DOM');
+function ensureCountDots(){
+  const balls = document.querySelector('.dots-balls');
+  if (balls && !document.getElementById('b1')) {
+    balls.innerHTML = '<i id="b1"></i><i id="b2"></i><i id="b3"></i><i id="b4"></i>';
+  }
+  const strikes = document.querySelector('.dots-strikes');
+  if (strikes && !document.getElementById('s1')) {
+    strikes.innerHTML = '<i id="s1"></i><i id="s2"></i><i id="s3"></i>';
   }
 }
 
-function renderTimeline(frames, idx){
-  const log=frames.map((f,i)=>`${i===idx?'👉 ':''}${f.ts||'--:--'} | ${f.event.code} | ${f.before.bases}/${f.before.outs} → ${f.after.bases}/${f.after.outs} | runs:${f.runs}`).join("\n");
-  document.getElementById("timeline").textContent=log;
+// --- status (inning/batting + B/S + outs) ---
+function renderStatus(state){
+  const half = state.half === 'TOP' ? '上' : '下';
+  const batting = state.batting === 'away' ? 'Away' : 'Home';
+  const pillInning = document.getElementById("pillInning");
+  const pillBat = document.getElementById("pillBat");
+  if (pillInning) pillInning.textContent = `${state.inning}${half}`;
+  if (pillBat) pillBat.textContent = batting;
+
+  ensureOutDots();
+  ensureCountDots();
+
+  const balls = Math.max(0, Math.min(4, state.count?.balls ?? 0));
+  ['b1','b2','b3','b4'].forEach((id, idx)=>{
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('on', balls >= idx+1);
+  });
+  const strikes = Math.max(0, Math.min(3, state.count?.strikes ?? 0));
+  ['s1','s2','s3'].forEach((id, idx)=>{
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('on', strikes >= idx+1);
+  });
+
+  const o1 = document.getElementById('out1');
+  const o2 = document.getElementById('out2');
+  if (o1 && o2) {
+    o1.classList.toggle('on', state.outs >= 1);
+    o2.classList.toggle('on', state.outs >= 2);
+  }
+}
+
+// --- show current event text + counter ---
+function renderCounter(idx,total){
+  const el=document.getElementById('evtCounter');
+  if(!el) return;
+  el.textContent = `事件：${Math.max(0,idx+1)} / ${total}`;
+}
+function formatAdvances(ev) {
+  const adv = ev?.meta?.advances;
+  if (!Array.isArray(adv) || adv.length === 0) return "";
+  return " [" + adv.map(a => `${a.from}→${a.to}`).join(",") + "]";
 }
 function renderNow(frames, idx){
   const el=document.getElementById('nowEvent');
   if(!el) return;
-  if(idx<0){ el.textContent="等待播放…"; return; }
-  const f=frames[idx]; el.textContent=`#${idx+1} ${f.ts||'--:--'} ${f.event.code}  ${f.before.bases}/${f.before.outs}→${f.after.bases}/${f.after.outs}`;
+  if(idx<0){ el.textContent="等待播放…"; renderCounter(-1, frames.length); return; }
+  const f=frames[idx];
+  const advTxt = formatAdvances(f.event);
+  // 顯示「中文事件敘述 event」；若沒有就退回 code
+  const desc = f.event.event || f.event.code;
+  el.textContent=`#${idx+1} ${f.ts||'--:--'} ${desc}${advTxt}  ${f.before.bases}/${f.before.outs}→${f.after.bases}/${f.after.outs}`;
+  renderCounter(idx, frames.length);
 }
 
 /* 播放器狀態 */
 let frames=[], current=-1, timer=null;
-let snapshotPerStep=[]; // 每步的 state 快照（用於回放渲染）
+let snapshotPerStep=[];
+
 function takeSnapshot(state){
-  return JSON.parse(JSON.stringify({ bases:state.bases, outs:state.outs, linescore:state.linescore, inning:state.inning, half:state.half, batting:state.batting }));
+  return JSON.parse(JSON.stringify({
+    bases: state.bases,
+    outs: state.outs,
+    linescore: state.linescore,
+    inning: state.inning,
+    half: state.half,
+    batting: state.batting,
+    count: state.count
+  }));
 }
 
 function showStep(idx){
   if(idx<0 || idx>=frames.length) return;
   current=idx;
-  const snap=snapshotPerStep[idx]; // 該步完成後的狀態
+  const snap=snapshotPerStep[idx];
   renderScoreboard(snap.linescore);
   renderBases(snap.bases);
   renderStatus(snap);
-  renderTimeline(frames, idx);
   renderNow(frames, idx);
 }
 
@@ -116,26 +156,43 @@ function next(){ pause(); if(current<frames.length-1) showStep(current+1); }
 
 async function main(){
   try{
+    ensureOutDots();
+    ensureCountDots();
+
     const events=await loadEventsWithMeta();
-    // 先跑一遍建立 frames 與每步快照
+
     const state=initialState();
     frames=[]; snapshotPerStep=[]; current=-1;
+
     let prevRuns=0;
+    let lastKey = `${state.batting}:${state.inning}`;
+
     for(const ev of events){
       const { before, after } = applyEvent(state, ev);
+
+      const key = `${state.batting}:${state.inning}`;
+      if (key !== lastKey) { prevRuns = 0; lastKey = key; }
+
       const arr=state.linescore[state.batting]||[];
       const cur=arr[state.inning-1] ?? 0;
-      frames.push({ ts:ev.ts, event:{code:ev.code}, before, after, runs: cur - prevRuns });
+
+      frames.push({
+        ts: ev.ts,
+        event: { code: ev.code, event: ev.event, meta: ev.meta }, // 帶上中文 event
+        before,
+        after,
+        runs: cur - prevRuns
+      });
       prevRuns=cur;
+
       snapshotPerStep.push( takeSnapshot(state) );
     }
 
     // 初始畫面（未播放）
     renderScoreboard({away:[],home:[]});
     renderBases({on1:false,on2:false,on3:false});
-    renderStatus({inning:1,half:"TOP",outs:0,batting:"away"});
-    renderTimeline(frames, -1);
-    renderNow(frames, -1);
+    renderStatus({inning:1,half:"TOP",outs:0,batting:"away",count:{balls:0,strikes:0}});
+    renderNow(frames, -1); // 也會刷新 counter
 
     // 綁定控制
     document.getElementById('btnPlay').onclick=()=> (timer? pause(): play());
@@ -143,7 +200,9 @@ async function main(){
     document.getElementById('btnNext').onclick=next;
   }catch(e){
     setVersionText('資料版本：讀取失敗');
-    document.getElementById('timeline').textContent=`❌ 載入或解析 events.json 失敗：${e.message}`;
+    // Timeline 已移除，錯誤顯示在 nowEvent
+    const el = document.getElementById('nowEvent');
+    if (el) el.textContent=`❌ 載入或解析 events.json 失敗：${e.message}`;
     console.error(e);
   }
 }
