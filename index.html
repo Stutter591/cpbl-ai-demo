@@ -16,7 +16,7 @@
     <!-- 左：記分板 + 播放 + 事件清單 -->
     <section class="card">
       <h2 class="score-title">記分板（逐局）</h2>
-      <div id="scoreboard">（載入中…）</div>
+      <div id="scoreboard"></div>
 
       <!-- 播放列（樣式由 #controls 控制） -->
       <div id="controls">
@@ -33,8 +33,11 @@
         <span id="evtCounter" style="margin-left:auto;opacity:.75">事件：0 / 0</span>
       </div>
 
-      <!-- 事件清單（只顯示最近 10 筆；樣式在 #timeline） -->
-      <pre id="timeline">等待播放…</pre>
+      <!-- 現在事件（單行文字） -->
+      <div id="nowEvent">等待播放…</div>
+
+      <!-- 事件清單（只顯示最近 10 筆；由 app.js 控制） -->
+      <pre id="eventList">（載入中…）</pre>
     </section>
 
     <!-- 右：場上狀態 -->
@@ -42,7 +45,9 @@
       <h2>場上狀態</h2>
 
       <div class="state-wrap">
+        <!-- 這個 div 會被 app.js 的 renderBases() 直接 .innerHTML 寫入 SVG -->
         <!-- 壘包菱形圖（SVG） -->
+        <div id="bases">
         <svg id="diamond" viewBox="0 0 260 260" aria-label="壘包菱形">
           <path class="diamond-line" d="M130,24 L236,130 L130,236 L24,130 Z"/>
           <!-- 上：二壘 -->
