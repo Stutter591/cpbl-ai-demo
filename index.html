@@ -3,27 +3,23 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>⚾ 智慧本壘板</title>
+  <title>⚾ 自動化棒球賽事紀錄與可視化</title>
   <link rel="stylesheet" href="./styles.css" />
-  <style>
-    /* 僅為事件清單做最小化控制，不影響原有主題與記分板樣式 */
-    #eventList{max-height:240px; overflow:auto;}
-    .mono{white-space:pre; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;}
-  </style>
 </head>
 <body>
-  <header class="header">
-    <h1>⚾ 智慧本壘板</h1>
+  <header>
+    <h1>⚾ 自動化棒球賽事紀錄與可視化</h1>
     <div id="version">資料版本：—</div>
   </header>
 
-  <main class="layout">
-    <!-- 左側：記分 + 控制 + 事件 -->
+  <main>
+    <!-- 左：記分板 + 播放 + 事件清單 -->
     <section class="card">
-      <h2>記分板（逐局）</h2>
+      <h2 class="score-title">記分板（逐局）</h2>
       <div id="scoreboard">（載入中…）</div>
 
-      <div class="toolbar">
+      <!-- 播放列（樣式由 #controls 控制） -->
+      <div id="controls">
         <button id="btnPrev">⏮ 上一步</button>
         <button id="btnPlay">▶️ 播放</button>
         <button id="btnNext">⏭ 下一步</button>
@@ -34,41 +30,61 @@
             <option value="400">快</option>
           </select>
         </label>
+        <span id="evtCounter" style="margin-left:auto;opacity:.75">事件：0 / 0</span>
       </div>
 
-      <!-- 流水事件編號 + 現在事件 -->
-      <div id="evtCounter">事件：0 / 0</div>
-      <div id="nowEvent" class="mono">等待播放…</div>
-
-      <h2 style="margin-top:16px;">事件清單</h2>
-      <pre id="eventList" class="mono">（載入中…）</pre>
+      <!-- 事件清單（只顯示最近 10 筆；樣式在 #timeline） -->
+      <pre id="timeline">等待播放…</pre>
     </section>
 
-    <!-- 右側：場上狀態 -->
+    <!-- 右：場上狀態 -->
     <aside class="card">
       <h2>場上狀態</h2>
 
-      <!-- 壘包圖（由 app.js 重新渲染） -->
-      <div id="bases" style="margin-top:8px">
+      <div class="state-wrap">
+        <!-- 壘包菱形圖（SVG） -->
         <svg id="diamond" viewBox="0 0 260 260" aria-label="壘包菱形">
           <path class="diamond-line" d="M130,24 L236,130 L130,236 L24,130 Z"/>
+          <!-- 上：二壘 -->
           <rect x="118" y="36" width="24" height="24" transform="rotate(45 130 48)" class="base-node" />
+          <!-- 右：一壘 -->
           <rect x="212" y="118" width="24" height="24" transform="rotate(45 224 130)" class="base-node" />
+          <!-- 左：三壘 -->
           <rect x="36" y="118" width="24" height="24" transform="rotate(45 48 130)" class="base-node" />
         </svg>
-      </div>
 
-      <!-- 局數 / 攻擊方 -->
-      <div class="chips">
-        <span class="chip" id="pillInning">局數—</span>
-        <span class="chip" id="pillBat">攻擊方—</span>
-      </div>
+        <!-- 下方資訊區 -->
+        <div class="side">
+          <!-- 第一排：局數 / 攻擊方 -->
+          <div class="row">
+            <div class="pill small">
+              <span class="label">局數</span>
+              <span class="val" id="pillInning">—</span>
+            </div>
+            <div class="pill small">
+              <span class="label">攻擊方</span>
+              <span class="val" id="pillBat">—</span>
+            </div>
+          </div>
 
-      <!-- 好壞球與出局燈 -->
-      <div class="lights">
-        <div class="row-light"><span class="label">好球</span><span class="dots-strikes"></span></div>
-        <div class="row-light"><span class="label">壞球</span><span class="dots-balls"></span></div>
-        <div class="row-light"><span class="label">出局</span><span class="outs"><span class="dots"></span></span></div>
+          <!-- 第二排：好球/壞球（黃/綠 燈） -->
+          <div class="count-lights">
+            <div class="lights pill">
+              <span class="label">好球</span>
+              <span class="dots dots-strikes"></span>
+            </div>
+            <div class="lights pill">
+              <span class="label">壞球</span>
+              <span class="dots dots-balls"></span>
+            </div>
+          </div>
+
+          <!-- 第三排：出局（紅燈，兩顆） -->
+          <div class="outs">
+            <span class="label">出局</span>
+            <span class="dots"><!-- 由 JS 注入 out1/out2 --></span>
+          </div>
+        </div>
       </div>
     </aside>
   </main>
