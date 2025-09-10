@@ -4,89 +4,46 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>⚾ 自動化棒球賽事紀錄與可視化</title>
-  <!-- 可選：外部樣式（若沒有也沒關係，下方有 fallback 內嵌樣式） -->
   <link rel="stylesheet" href="./styles.css" />
   <style>
-    /* ==== Fallback 內嵌樣式（避免外部 CSS 未載入時整頁空白） ==== */
     :root {
-      --card-border: #e5e7eb;
-      --muted: #6b7280;
-      --text: #111827;
-      --bg: #ffffff;
-      --chip-bg: #f3f4f6;
-      --dot: #e5e7eb;
-      --dot-out: #ef4444;    /* 出局燈紅 */
-      --dot-ball: #10b981;   /* 壞球燈綠 */
-      --dot-strike: #3b82f6; /* 好球燈藍 */
-      --base-off: #e5e7eb;
-      --base-on: #f59e0b;
+      --card-border:#e5e7eb; --muted:#6b7280; --text:#e5e7eb;
+      --bg:#0b1623; --chip-bg:#102233; --dot:#1e293b;
+      --dot-out:#ef4444; --dot-ball:#10b981; --dot-strike:#3b82f6;
+      --base-off:#1f2937; --base-on:#22d3ee;
+      --panel:#0e1b2a;
     }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; padding: 20px;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
-      color: var(--text); background: var(--bg);
-    }
-    header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 16px;
-    }
-    h1 { margin: 0; font-size: 20px; }
-    #version { color: var(--muted); font-size: 12px; }
-    .layout {
-      display: grid; gap: 16px;
-      grid-template-columns: 1fr 340px;
-      align-items: start;
-    }
-    @media (max-width: 960px) {
-      .layout { grid-template-columns: 1fr; }
-    }
-    .card {
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 16px;
-      background: #fff;
-    }
-    .card h2 { margin: 0 0 12px; font-size: 16px; }
-    /* 記分板表格 */
-    #scoreboard table {
-      width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums;
-    }
-    #scoreboard th, #scoreboard td {
-      border: 1px solid #e5e7eb; padding: 6px 8px; text-align: center;
-    }
-    #scoreboard th:first-child, #scoreboard td:first-child { text-align: left; }
-    /* 控制列 */
-    .toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-    button, select, label { font: inherit; }
-    /* 事件資訊 */
-    #evtCounter { margin-top: 6px; color: var(--muted); font-size: 13px; }
-    #nowEvent { margin-top: 6px; color: #374151; font-size: 14px; }
-    /* 右側狀態 */
-    .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-    .chip {
-      display: inline-flex; align-items: center; justify-content: center;
-      padding: 4px 10px; border-radius: 999px; background: var(--chip-bg);
-      font-size: 13px; min-height: 28px; max-width: 100%;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .lights { margin-top: 8px; display: grid; gap: 6px; }
-    .row-light { display: flex; align-items: center; gap: 8px; }
-    .label { width: 48px; color: var(--muted); font-size: 13px; }
-    .dots, .dots-balls, .dots-strikes { display: inline-flex; gap: 6px; vertical-align: middle; }
-    .dots i, .dots-balls i, .dots-strikes i {
-      width: 10px; height: 10px; border-radius: 50%; background: var(--dot); display: inline-block;
-    }
-    .dots i.on { background: var(--dot-out); }
-    .dots-balls i.on { background: var(--dot-ball); }
-    .dots-strikes i.on { background: var(--dot-strike); }
-    /* 壘包菱形圖 */
-    #diamond { width: 100%; max-width: 260px; height: auto; }
-    .diamond-line { fill: none; stroke: #111827; stroke-width: 2; }
-    .base-node { fill: var(--base-off); }
-    .base-node.on { fill: var(--base-on); }
-    /* 小標題間距 */
-    .section-gap { margin-top: 16px; }
+    *{box-sizing:border-box}
+    body{margin:0;padding:24px;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC",sans-serif}
+    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+    h1{margin:0;font-size:22px}
+    #version{color:var(--muted);font-size:12px}
+    .layout{display:grid;gap:16px;grid-template-columns:1fr 360px}
+    @media (max-width: 1000px){.layout{grid-template-columns:1fr}}
+    .card{background:var(--panel);border:1px solid #1d2a3a;border-radius:16px;padding:16px}
+    .card h2{margin:0 0 12px;font-size:18px}
+    #scoreboard table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+    #scoreboard th,#scoreboard td{border:1px solid #223041;padding:8px;text-align:center}
+    #scoreboard th:first-child,#scoreboard td:first-child{text-align:left}
+    .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
+    button,select,label{font:inherit}
+    .mono{white-space:pre;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;font-size:14px;line-height:1.6}
+    #evtCounter{margin-top:6px;color:#93a4b7;font-size:13px}
+    #nowEvent{margin-top:6px;color:#c8d3df}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .chip{display:inline-flex;align-items:center;justify-content:center;padding:6px 12px;border-radius:999px;background:var(--chip-bg);font-size:13px}
+    .lights{margin-top:8px;display:grid;gap:8px}
+    .row-light{display:flex;align-items:center;gap:10px}
+    .label{width:48px;color:#9fb0c3;font-size:13px}
+    .dots,.dots-balls,.dots-strikes{display:inline-flex;gap:8px;vertical-align:middle}
+    .dots i,.dots-balls i,.dots-strikes i{width:12px;height:12px;border-radius:50%;background:var(--dot);display:inline-block}
+    .dots i.on{background:var(--dot-out)}
+    .dots-balls i.on{background:var(--dot-ball)}
+    .dots-strikes i.on{background:var(--dot-strike)}
+    #diamond{width:100%;max-width:260px;height:auto}
+    .diamond-line{fill:none;stroke:#1ad1c9;stroke-width:4}
+    .base-node{fill:#2a3b52}
+    .base-node.on{fill:#1ad1c9}
   </style>
 </head>
 <body>
@@ -96,7 +53,7 @@
   </header>
 
   <main class="layout">
-    <!-- 左側：記分 + 控制 + 事件資訊 -->
+    <!-- 左側：記分、控制、事件清單 -->
     <section class="card">
       <h2>記分板（逐局）</h2>
       <div id="scoreboard">（載入中…）</div>
@@ -114,18 +71,18 @@
         </label>
       </div>
 
-      <!-- 流水事件編號 -->
+      <!-- 流水事件編號 + 現在事件 -->
       <div id="evtCounter">事件：0 / 0</div>
-      <!-- 現在事件（顯示 event 中文敘述 + 進壘摘要） -->
-      <div id="nowEvent">等待播放…</div>
+      <div id="nowEvent" class="mono">等待播放…</div>
+
+      <h2 style="margin-top:16px;">事件清單</h2>
+      <pre id="eventList" class="mono">（載入中…）</pre>
     </section>
 
     <!-- 右側：場上狀態 -->
     <aside class="card">
       <h2>場上狀態</h2>
-
-      <!-- 壘包圖（上：二壘、右：一壘、左：三壘；不畫本壘） -->
-      <div id="bases" class="section-gap">
+      <div id="bases" style="margin-top:8px">
         <svg id="diamond" viewBox="0 0 260 260" aria-label="壘包菱形">
           <path class="diamond-line" d="M130,24 L236,130 L130,236 L24,130 Z"/>
           <rect x="118" y="36" width="24" height="24" transform="rotate(45 130 48)" class="base-node" />
@@ -134,26 +91,15 @@
         </svg>
       </div>
 
-      <!-- 局數 / 攻擊方 -->
       <div class="chips">
         <span class="chip" id="pillInning">局數—</span>
         <span class="chip" id="pillBat">攻擊方—</span>
       </div>
 
-      <!-- 好壞球與出局燈 -->
       <div class="lights">
-        <div class="row-light">
-          <span class="label">好球</span>
-          <span class="dots-strikes"></span>
-        </div>
-        <div class="row-light">
-          <span class="label">壞球</span>
-          <span class="dots-balls"></span>
-        </div>
-        <div class="row-light">
-          <span class="label">出局</span>
-          <span class="outs"><span class="dots"></span></span>
-        </div>
+        <div class="row-light"><span class="label">好球</span><span class="dots-strikes"></span></div>
+        <div class="row-light"><span class="label">壞球</span><span class="dots-balls"></span></div>
+        <div class="row-light"><span class="label">出局</span><span class="outs"><span class="dots"></span></span></div>
       </div>
     </aside>
   </main>
