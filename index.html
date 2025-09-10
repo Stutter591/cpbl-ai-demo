@@ -2,73 +2,162 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8" />
-  <title>智慧本壘板</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>⚾ 自動化棒球賽事紀錄與可視化</title>
+  <!-- 可選：外部樣式（若沒有也沒關係，下方有 fallback 內嵌樣式） -->
+  <link rel="stylesheet" href="./styles.css" />
+  <style>
+    /* ==== Fallback 內嵌樣式（避免外部 CSS 未載入時整頁空白） ==== */
+    :root {
+      --card-border: #e5e7eb;
+      --muted: #6b7280;
+      --text: #111827;
+      --bg: #ffffff;
+      --chip-bg: #f3f4f6;
+      --dot: #e5e7eb;
+      --dot-out: #ef4444;    /* 出局燈紅 */
+      --dot-ball: #10b981;   /* 壞球燈綠 */
+      --dot-strike: #3b82f6; /* 好球燈藍 */
+      --base-off: #e5e7eb;
+      --base-on: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 20px;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+      color: var(--text); background: var(--bg);
+    }
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    h1 { margin: 0; font-size: 20px; }
+    #version { color: var(--muted); font-size: 12px; }
+    .layout {
+      display: grid; gap: 16px;
+      grid-template-columns: 1fr 340px;
+      align-items: start;
+    }
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+    .card {
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+      background: #fff;
+    }
+    .card h2 { margin: 0 0 12px; font-size: 16px; }
+    /* 記分板表格 */
+    #scoreboard table {
+      width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums;
+    }
+    #scoreboard th, #scoreboard td {
+      border: 1px solid #e5e7eb; padding: 6px 8px; text-align: center;
+    }
+    #scoreboard th:first-child, #scoreboard td:first-child { text-align: left; }
+    /* 控制列 */
+    .toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    button, select, label { font: inherit; }
+    /* 事件資訊 */
+    #evtCounter { margin-top: 6px; color: var(--muted); font-size: 13px; }
+    #nowEvent { margin-top: 6px; color: #374151; font-size: 14px; }
+    /* 右側狀態 */
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .chip {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 4px 10px; border-radius: 999px; background: var(--chip-bg);
+      font-size: 13px; min-height: 28px; max-width: 100%;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .lights { margin-top: 8px; display: grid; gap: 6px; }
+    .row-light { display: flex; align-items: center; gap: 8px; }
+    .label { width: 48px; color: var(--muted); font-size: 13px; }
+    .dots, .dots-balls, .dots-strikes { display: inline-flex; gap: 6px; vertical-align: middle; }
+    .dots i, .dots-balls i, .dots-strikes i {
+      width: 10px; height: 10px; border-radius: 50%; background: var(--dot); display: inline-block;
+    }
+    .dots i.on { background: var(--dot-out); }
+    .dots-balls i.on { background: var(--dot-ball); }
+    .dots-strikes i.on { background: var(--dot-strike); }
+    /* 壘包菱形圖 */
+    #diamond { width: 100%; max-width: 260px; height: auto; }
+    .diamond-line { fill: none; stroke: #111827; stroke-width: 2; }
+    .base-node { fill: var(--base-off); }
+    .base-node.on { fill: var(--base-on); }
+    /* 小標題間距 */
+    .section-gap { margin-top: 16px; }
+  </style>
 </head>
 <body>
   <header>
-    <h1>⚾ 智慧本壘板</h1>
-    <small id="version"></small>
+    <h1>⚾ 自動化棒球賽事紀錄與可視化</h1>
+    <div id="version">資料版本：—</div>
   </header>
 
-  <main>
-    <!-- 左：記分板 -->
+  <main class="layout">
+    <!-- 左側：記分 + 控制 + 事件資訊 -->
     <section class="card">
-      <h2 class="score-title">記分板（逐局）</h2>
-      <div id="scoreboard"></div>
+      <h2>記分板（逐局）</h2>
+      <div id="scoreboard">（載入中…）</div>
+
+      <div class="toolbar">
+        <button id="btnPrev">⏮ 上一步</button>
+        <button id="btnPlay">▶️ 播放</button>
+        <button id="btnNext">⏭ 下一步</button>
+        <label>速度
+          <select id="speed">
+            <option value="1000">慢</option>
+            <option value="700" selected>中</option>
+            <option value="400">快</option>
+          </select>
+        </label>
+      </div>
+
+      <!-- 流水事件編號 -->
+      <div id="evtCounter">事件：0 / 0</div>
+      <!-- 現在事件（顯示 event 中文敘述 + 進壘摘要） -->
+      <div id="nowEvent">等待播放…</div>
     </section>
 
-    <!-- 右：場上狀態（壘包菱形 + 資訊膠囊） -->
-    <section class="card">
+    <!-- 右側：場上狀態 -->
+    <aside class="card">
       <h2>場上狀態</h2>
-      <div class="state-wrap">
-        <!-- 上：壘包圖 -->
-        <div id="bases"><!-- SVG 由 JS 注入 --></div>
-    
-        <!-- 下：資訊區 -->
-        <div class="side">
-          <!-- 第一排：局數 / 攻擊方 -->
-          <div class="row">
-            <div class="pill small"><span class="label">局數</span><span class="val" id="pillInning">—</span></div>
-            <div class="pill small"><span class="label">攻擊方</span><span class="val" id="pillBat">—</span></div>
-          </div>
-          <!-- 第二排：壞球 / 好球 -->
-          <div class="count-lights">
-            <div class="lights pill">
-              <span class="label">好球</span>
-              <div class="dots dots-strikes">
-                <i id="s1"></i><i id="s2"></i><i id="s3"></i>
-              </div>
-            </div>
-            <div class="lights pill">
-              <span class="label">壞球</span>
-              <div class="dots dots-balls">
-                <i id="b1"></i><i id="b2"></i><i id="b3"></i><i id="b4"></i>
-              </div>             
-            </div>
-          </div>
-          <!-- 第三排：出局數（兩顆紅燈） -->
-          <div class="outs">
-            <span class="label">出局數</span>
-            <div class="dots"><i id="out1"></i><i id="out2"></i></div>
-          </div>
+
+      <!-- 壘包圖（上：二壘、右：一壘、左：三壘；不畫本壘） -->
+      <div id="bases" class="section-gap">
+        <svg id="diamond" viewBox="0 0 260 260" aria-label="壘包菱形">
+          <path class="diamond-line" d="M130,24 L236,130 L130,236 L24,130 Z"/>
+          <rect x="118" y="36" width="24" height="24" transform="rotate(45 130 48)" class="base-node" />
+          <rect x="212" y="118" width="24" height="24" transform="rotate(45 224 130)" class="base-node" />
+          <rect x="36" y="118" width="24" height="24" transform="rotate(45 48 130)" class="base-node" />
+        </svg>
+      </div>
+
+      <!-- 局數 / 攻擊方 -->
+      <div class="chips">
+        <span class="chip" id="pillInning">局數—</span>
+        <span class="chip" id="pillBat">攻擊方—</span>
+      </div>
+
+      <!-- 好壞球與出局燈 -->
+      <div class="lights">
+        <div class="row-light">
+          <span class="label">好球</span>
+          <span class="dots-strikes"></span>
+        </div>
+        <div class="row-light">
+          <span class="label">壞球</span>
+          <span class="dots-balls"></span>
+        </div>
+        <div class="row-light">
+          <span class="label">出局</span>
+          <span class="outs"><span class="dots"></span></span>
         </div>
       </div>
-    </section>
+    </aside>
   </main>
 
-  <!-- 播放控制與時間軸（若已經有就保留即可） -->
-  <section id="controls">
-    <button id="btnPrev">⏮ 上一步</button>
-    <button id="btnPlay">▶️ 播放</button>
-    <button id="btnNext">⏭ 下一步</button>
-    <label style="margin-left:8px;">速度
-      <select id="speed"><option value="1200">慢</option><option value="800" selected>中</option><option value="400">快</option></select>
-    </label>
-    <span id="nowEvent" style="margin-left:auto;opacity:.8;font-family:monospace;"></span>
-  </section>
-  <aside id="timeline"></aside>
-
-  <script type="module" src="app.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
