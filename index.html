@@ -45,53 +45,52 @@
       <h2>場上狀態</h2>
 
       <div class="state-wrap">
-        <!-- 這個 div 會被 app.js 的 renderBases() 直接 .innerHTML 寫入 SVG -->
-        <!-- 壘包菱形圖（SVG） -->
-        <div id="bases">
+        <div class="state-wrap">
+      <!-- ① 壘包圖容器：app.js 會把 SVG 寫進這個 #bases -->
+      <div id="bases">
+        <!-- 可留空，或放預設 SVG；app.js 會在執行時覆蓋 -->
         <svg id="diamond" viewBox="0 0 260 260" aria-label="壘包菱形">
           <path class="diamond-line" d="M130,24 L236,130 L130,236 L24,130 Z"/>
-          <!-- 上：二壘 -->
           <rect x="118" y="36" width="24" height="24" transform="rotate(45 130 48)" class="base-node" />
-          <!-- 右：一壘 -->
           <rect x="212" y="118" width="24" height="24" transform="rotate(45 224 130)" class="base-node" />
-          <!-- 左：三壘 -->
           <rect x="36" y="118" width="24" height="24" transform="rotate(45 48 130)" class="base-node" />
         </svg>
-
-        <!-- 下方資訊區 -->
-        <div class="side">
-          <!-- 第一排：局數 / 攻擊方 -->
-          <div class="row">
-            <div class="pill small">
-              <span class="label">局數</span>
-              <span class="val" id="pillInning">—</span>
-            </div>
-            <div class="pill small">
-              <span class="label">攻擊方</span>
-              <span class="val" id="pillBat">—</span>
-            </div>
+      </div>
+  
+      <!-- ② 下方資訊區：pill（局數/攻擊方） + 好壞球燈 + 出局燈 -->
+      <div class="side">
+        <!-- 第一排：局數 / 攻擊方（使用 .pill.small，id 必須是這兩個） -->
+        <div class="row">
+          <div class="pill small">
+            <span class="label">局數</span>
+            <span class="val" id="pillInning">—</span>
           </div>
-
-          <!-- 第二排：好球/壞球（黃/綠 燈） -->
-          <div class="count-lights">
-            <div class="lights pill">
-              <span class="label">好球</span>
-              <span class="dots dots-strikes"></span>
-            </div>
-            <div class="lights pill">
-              <span class="label">壞球</span>
-              <span class="dots dots-balls"></span>
-            </div>
-          </div>
-
-          <!-- 第三排：出局（紅燈，兩顆） -->
-          <div class="outs">
-            <span class="label">出局</span>
-            <span class="dots"><!-- 由 JS 注入 out1/out2 --></span>
+          <div class="pill small">
+            <span class="label">攻擊方</span>
+            <span class="val" id="pillBat">—</span>
           </div>
         </div>
+  
+        <!-- 第二排：好球（黃燈）/ 壞球（綠燈） -->
+        <div class="count-lights">
+          <div class="lights pill">
+            <span class="label">好球</span>
+            <span class="dots dots-strikes"></span>  <!-- app.js 會注入 s1~s3 -->
+          </div>
+          <div class="lights pill">
+            <span class="label">壞球</span>
+            <span class="dots dots-balls"></span>     <!-- app.js 會注入 b1~b4 -->
+          </div>
+        </div>
+  
+        <!-- 第三排：出局（紅燈，兩顆） -->
+        <div class="outs">
+          <span class="label">出局</span>
+          <span class="dots"><!-- app.js 會注入 <i id="out1"></i><i id="out2"></i> --></span>
+        </div>
       </div>
-    </aside>
+    </div>
+</aside>
   </main>
 
   <script type="module" src="./app.js"></script>
