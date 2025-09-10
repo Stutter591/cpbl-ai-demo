@@ -3,57 +3,22 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>⚾ 自動化棒球賽事紀錄與可視化</title>
+  <title>⚾ 智慧本壘板</title>
   <link rel="stylesheet" href="./styles.css" />
   <style>
-    :root {
-      --card-border:#e5e7eb; --muted:#6b7280; --text:#e5e7eb;
-      --bg:#0b1623; --chip-bg:#102233; --dot:#1e293b;
-      --dot-out:#ef4444; --dot-ball:#10b981; --dot-strike:#3b82f6;
-      --base-off:#1f2937; --base-on:#22d3ee;
-      --panel:#0e1b2a;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;padding:24px;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC",sans-serif}
-    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-    h1{margin:0;font-size:22px}
-    #version{color:var(--muted);font-size:12px}
-    .layout{display:grid;gap:16px;grid-template-columns:1fr 360px}
-    @media (max-width: 1000px){.layout{grid-template-columns:1fr}}
-    .card{background:var(--panel);border:1px solid #1d2a3a;border-radius:16px;padding:16px}
-    .card h2{margin:0 0 12px;font-size:18px}
-    #scoreboard table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
-    #scoreboard th,#scoreboard td{border:1px solid #223041;padding:8px;text-align:center}
-    #scoreboard th:first-child,#scoreboard td:first-child{text-align:left}
-    .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
-    button,select,label{font:inherit}
-    .mono{white-space:pre;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;font-size:14px;line-height:1.6}
-    #evtCounter{margin-top:6px;color:#93a4b7;font-size:13px}
-    #nowEvent{margin-top:6px;color:#c8d3df}
-    .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-    .chip{display:inline-flex;align-items:center;justify-content:center;padding:6px 12px;border-radius:999px;background:var(--chip-bg);font-size:13px}
-    .lights{margin-top:8px;display:grid;gap:8px}
-    .row-light{display:flex;align-items:center;gap:10px}
-    .label{width:48px;color:#9fb0c3;font-size:13px}
-    .dots,.dots-balls,.dots-strikes{display:inline-flex;gap:8px;vertical-align:middle}
-    .dots i,.dots-balls i,.dots-strikes i{width:12px;height:12px;border-radius:50%;background:var(--dot);display:inline-block}
-    .dots i.on{background:var(--dot-out)}
-    .dots-balls i.on{background:var(--dot-ball)}
-    .dots-strikes i.on{background:var(--dot-strike)}
-    #diamond{width:100%;max-width:260px;height:auto}
-    .diamond-line{fill:none;stroke:#1ad1c9;stroke-width:4}
-    .base-node{fill:#2a3b52}
-    .base-node.on{fill:#1ad1c9}
+    /* 僅為事件清單做最小化控制，不影響原有主題與記分板樣式 */
+    #eventList{max-height:240px; overflow:auto;}
+    .mono{white-space:pre; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;}
   </style>
 </head>
 <body>
-  <header>
-    <h1>⚾ 自動化棒球賽事紀錄與可視化</h1>
+  <header class="header">
+    <h1>⚾ 智慧本壘板</h1>
     <div id="version">資料版本：—</div>
   </header>
 
   <main class="layout">
-    <!-- 左側：記分、控制、事件清單 -->
+    <!-- 左側：記分 + 控制 + 事件 -->
     <section class="card">
       <h2>記分板（逐局）</h2>
       <div id="scoreboard">（載入中…）</div>
@@ -82,6 +47,8 @@
     <!-- 右側：場上狀態 -->
     <aside class="card">
       <h2>場上狀態</h2>
+
+      <!-- 壘包圖（由 app.js 重新渲染） -->
       <div id="bases" style="margin-top:8px">
         <svg id="diamond" viewBox="0 0 260 260" aria-label="壘包菱形">
           <path class="diamond-line" d="M130,24 L236,130 L130,236 L24,130 Z"/>
@@ -91,11 +58,13 @@
         </svg>
       </div>
 
+      <!-- 局數 / 攻擊方 -->
       <div class="chips">
         <span class="chip" id="pillInning">局數—</span>
         <span class="chip" id="pillBat">攻擊方—</span>
       </div>
 
+      <!-- 好壞球與出局燈 -->
       <div class="lights">
         <div class="row-light"><span class="label">好球</span><span class="dots-strikes"></span></div>
         <div class="row-light"><span class="label">壞球</span><span class="dots-balls"></span></div>
