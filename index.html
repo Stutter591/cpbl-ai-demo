@@ -33,9 +33,19 @@
             <div class="pill small"><span class="label">攻擊方</span><span class="val" id="pillBat">—</span></div>
           </div>
           <!-- 第二排：壞球 / 好球 -->
-          <div class="row">
-            <div class="pill small"><span class="label">壞球</span><span class="val" id="pillBalls">0</span></div>
-            <div class="pill small"><span class="label">好球</span><span class="val" id="pillStrikes">0</span></div>
+          <div class="count-lights">
+            <div class="lights pill">
+              <span class="label">壞球</span>
+              <div class="dots dots-balls">
+                <i id="b1"></i><i id="b2"></i><i id="b3"></i><i id="b4"></i>
+              </div>
+            </div>
+            <div class="lights pill">
+              <span class="label">好球</span>
+              <div class="dots dots-strikes">
+                <i id="s1"></i><i id="s2"></i><i id="s3"></i>
+              </div>
+            </div>
           </div>
           <!-- 第三排：出局數（兩顆紅燈） -->
           <div class="outs">
