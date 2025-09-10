@@ -1,4 +1,4 @@
-// app.js — no timeline; show event text + counter
+// app.js — 包事件清單（無 timeline 命名衝突），每列含流水號 + event 中文
 import { initialState, applyEvent } from './rules.js';
 
 const tz = 'Asia/Taipei';
@@ -43,7 +43,7 @@ function renderBases(bases){
    </svg>`;
 }
 
-// --- ensure dots ---
+// dots
 function ensureOutDots() {
   const dots = document.querySelector('.outs .dots');
   if (dots && (!document.getElementById('out1') || !document.getElementById('out2'))) {
@@ -61,7 +61,6 @@ function ensureCountDots(){
   }
 }
 
-// --- status (inning/batting + B/S + outs) ---
 function renderStatus(state){
   const half = state.half === 'TOP' ? '上' : '下';
   const batting = state.batting === 'away' ? 'Away' : 'Home';
@@ -70,8 +69,7 @@ function renderStatus(state){
   if (pillInning) pillInning.textContent = `${state.inning}${half}`;
   if (pillBat) pillBat.textContent = batting;
 
-  ensureOutDots();
-  ensureCountDots();
+  ensureOutDots(); ensureCountDots();
 
   const balls = Math.max(0, Math.min(4, state.count?.balls ?? 0));
   ['b1','b2','b3','b4'].forEach((id, idx)=>{
@@ -83,36 +81,46 @@ function renderStatus(state){
     const el = document.getElementById(id);
     if (el) el.classList.toggle('on', strikes >= idx+1);
   });
-
-  const o1 = document.getElementById('out1');
-  const o2 = document.getElementById('out2');
-  if (o1 && o2) {
-    o1.classList.toggle('on', state.outs >= 1);
-    o2.classList.toggle('on', state.outs >= 2);
-  }
+  const o1 = document.getElementById('out1'), o2 = document.getElementById('out2');
+  if (o1 && o2) { o1.classList.toggle('on', state.outs >= 1); o2.classList.toggle('on', state.outs >= 2); }
 }
 
-// --- show current event text + counter ---
-function renderCounter(idx,total){
-  const el=document.getElementById('evtCounter');
-  if(!el) return;
-  el.textContent = `事件：${Math.max(0,idx+1)} / ${total}`;
-}
+// helper: bases string already in frames; show advances hint
 function formatAdvances(ev) {
   const adv = ev?.meta?.advances;
   if (!Array.isArray(adv) || adv.length === 0) return "";
   return " [" + adv.map(a => `${a.from}→${a.to}`).join(",") + "]";
 }
+
+// 現在事件（中文 event）
 function renderNow(frames, idx){
   const el=document.getElementById('nowEvent');
-  if(!el) return;
+  if(!el){ return; }
   if(idx<0){ el.textContent="等待播放…"; renderCounter(-1, frames.length); return; }
   const f=frames[idx];
   const advTxt = formatAdvances(f.event);
-  // 顯示「中文事件敘述 event」；若沒有就退回 code
   const desc = f.event.event || f.event.code;
-  el.textContent=`#${idx+1} ${f.ts||'--:--'} ${desc}${advTxt}  ${f.before.bases}/${f.before.outs}→${f.after.bases}/${f.after.outs}`;
+  el.textContent=`#${idx+1} ${f.ts||'--:--'}  ${desc}  ${f.before.bases}/${f.before.outs} → ${f.after.bases}/${f.after.outs}${advTxt}`;
   renderCounter(idx, frames.length);
+}
+
+// 事件清單（像 timeline，但名稱避免衝突）
+function renderEventList(frames, currentIdx){
+  const el = document.getElementById('eventList');
+  if(!el) return;
+  const lines = frames.map((f,i)=>{
+    const mark = (i===currentIdx) ? '👉 ' : '   ';
+    const desc = f.event.event || f.event.code;
+    const advTxt = formatAdvances(f.event);
+    return `${mark}#${i+1} ${f.ts||'--:--'}  ${desc}  ${f.before.bases}/${f.before.outs} → ${f.after.bases}/${f.after.outs}${advTxt} | runs:${f.runs}`;
+  });
+  el.textContent = lines.join("\n");
+}
+
+function renderCounter(idx,total){
+  const el=document.getElementById('evtCounter');
+  if(!el) return;
+  el.textContent = `事件：${Math.max(0,idx+1)} / ${total}`;
 }
 
 /* 播放器狀態 */
@@ -139,6 +147,7 @@ function showStep(idx){
   renderBases(snap.bases);
   renderStatus(snap);
   renderNow(frames, idx);
+  renderEventList(frames, idx);
 }
 
 function play(){
@@ -156,9 +165,7 @@ function next(){ pause(); if(current<frames.length-1) showStep(current+1); }
 
 async function main(){
   try{
-    ensureOutDots();
-    ensureCountDots();
-
+    ensureOutDots(); ensureCountDots();
     const events=await loadEventsWithMeta();
 
     const state=initialState();
@@ -178,7 +185,7 @@ async function main(){
 
       frames.push({
         ts: ev.ts,
-        event: { code: ev.code, event: ev.event, meta: ev.meta }, // 帶上中文 event
+        event: { code: ev.code, event: ev.event, meta: ev.meta },
         before,
         after,
         runs: cur - prevRuns
@@ -188,19 +195,19 @@ async function main(){
       snapshotPerStep.push( takeSnapshot(state) );
     }
 
-    // 初始畫面（未播放）
+    // 初始畫面
     renderScoreboard({away:[],home:[]});
     renderBases({on1:false,on2:false,on3:false});
     renderStatus({inning:1,half:"TOP",outs:0,batting:"away",count:{balls:0,strikes:0}});
-    renderNow(frames, -1); // 也會刷新 counter
+    renderNow(frames, -1);
+    renderEventList(frames, -1);
 
-    // 綁定控制
+    // 控制綁定
     document.getElementById('btnPlay').onclick=()=> (timer? pause(): play());
     document.getElementById('btnPrev').onclick=prev;
     document.getElementById('btnNext').onclick=next;
   }catch(e){
     setVersionText('資料版本：讀取失敗');
-    // Timeline 已移除，錯誤顯示在 nowEvent
     const el = document.getElementById('nowEvent');
     if (el) el.textContent=`❌ 載入或解析 events.json 失敗：${e.message}`;
     console.error(e);
