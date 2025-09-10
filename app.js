@@ -111,7 +111,19 @@ function renderNow(frames, idx){
   const f=frames[idx];
   el.textContent=`#${idx+1} ${f.ts||'--:--'} ${f.event.code}  ${f.before.bases}/${f.before.outs}→${f.after.bases}/${f.after.outs}`;
 }
+//advances的描述
+function formatAdvances(ev) {
+  if (!ev.meta?.advances) return "";
+  return ev.meta.advances.map(a => `${a.runner}:${a.from}->${a.to}`).join(",");
+}
 
+function renderTimeline(frames, idx){
+  const log=frames.map((f,i)=>{
+    const advText = formatAdvances(f.event);
+    return `${i===idx?'👉 ':''}${f.ts||'--:--'} | ${f.event.code}${advText?(" ["+advText+"]"):""} | ${f.before.bases}/${f.before.outs} → ${f.after.bases}/${f.after.outs} | runs:${f.runs}`;
+  }).join("\n");
+  document.getElementById("timeline").textContent=log;
+}
 /* 播放器狀態與快照 */
 let frames=[], current=-1, timer=null;
 let snapshotPerStep=[];
