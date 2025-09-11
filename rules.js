@@ -27,7 +27,6 @@
  * - for GO:
  *    - doublePlay: true|{order:["2","1"]}  // 例如 6-4-3，先封二再一
  *    - outsOn: ["BR","R1","R2","R3"]       // 指定誰出局（打者BR、壘上跑者 R1/R2/R3）
- *    - advances: {"R1":1,"R2":0,"R3":0}    // 額外推進（0:停、1:＋一壘、…），若未提供用強迫進壘
  * - for FO:
  *    - tagUp: {"R3":1,"R2":0,"R1":0}       // 誰在補位後推進，R3:1 代表三壘回本壘得分
  *    - sacrifice: true                     // 視為 SF（高飛犧牲打），會自動判定 R3 得分
@@ -37,6 +36,8 @@
  * - for BB/HBP:
  *    - rbi: number                         // 少見但允許指定是否記分（默認按強迫進壘推斷）
  * @typedef {Object} Meta
+ * @typedef {{from: 0|1|2|3, to: 1|2|3|4|"H"}} RunnerAdvance  // from=0 代表打者
+ * @typedef {{ts?:string, event?:string, code:EventCode, runner_advances?: RunnerAdvance[], meta?:any}} PlayEvent
  */
 
 /** @typedef {{ts?:string,raw?:string,code:EventCode,meta?:any}} PlayEvent */
@@ -152,11 +153,11 @@ export function applyEvent(state, ev) {
   const before = { bases: basesStr(state.bases), outs: state.outs };
   const b = state.bases;
   const code = ev.code;
-  const meta = ev.meta || {};
-
+  const meta = ev.meta || {};                 // GO/FO/FC/DP 用得到
+  const advances = ev.runner_advances || [];  // 一律當陣列處理
   const endIf3 = () => (state.outs >= 3) && (switchHalfInning(state), true);
 
-  // 小工具：先處理 meta.advances（from/to；to=4 表本壘；支援 from=0=打者）
+  // 小工具：先處理 runner_advances（from/to；to=4 表本壘；支援 from=0=打者）
   function applyAdvancesPre(advList) {
     if (!advList || !Array.isArray(advList) || advList.length === 0) return new Set();
     // 先從 3,2,1,0 的順序推，避免覆蓋
@@ -217,8 +218,8 @@ export function applyEvent(state, ev) {
       const beforeBases = JSON.parse(JSON.stringify(b)); // 事件發生前的壘包快照
       const step = (code === "1B" ? 1 : code === "2B" ? 2 : code === "3B" ? 3 : 4);
 
-      // 1) 先處理 meta.advances（優先）
-      const handledFrom = applyAdvancesPre(meta.advances);
+      // 1) 先處理 runner_advances（優先）
+      const handledFrom = applyAdvancesPre(advances);
 
       // 2) 對「未在 advances 指定」的跑者，依照 before 狀態套用預設推進
       let addRuns = 0;
