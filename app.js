@@ -37,9 +37,9 @@ function renderBases(bases){
   document.getElementById('bases').innerHTML = `
    <svg id="diamond" viewBox="0 0 260 260" aria-label="壘包菱形">
      <path class="diamond-line" d="M130,24 L236,130 L130,236 L24,130 Z"/>
-     <rect x="118" y="36" width="24" height="24" transform="rotate(45 130 48)" class="base-node ${on2}" />
+     <rect x="118" y="24" width="24" height="24" transform="rotate(45 130 36)" class="base-node ${on2}" />
      <rect x="212" y="118" width="24" height="24" transform="rotate(45 224 130)" class="base-node ${on1}" />
-     <rect x="36" y="118" width="24" height="24" transform="rotate(45 48 130)" class="base-node ${on3}" />
+     <rect x="24" y="118" width="24" height="24" transform="rotate(45 36 130)" class="base-node ${on3}" />
    </svg>`;
 }
 
