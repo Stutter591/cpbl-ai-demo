@@ -154,7 +154,7 @@ export function applyEvent(state, ev) {
   const b = state.bases;
   const code = ev.code;
   const meta = ev.meta || {};                 // GO/FO/FC/DP 用得到
-  const advances = ev.runner_advances || [];  // 一律當陣列處理
+  const advances = ev.runner_advances || [];  // 一律當陣列處理（預設空陣列）
   const endIf3 = () => (state.outs >= 3) && (switchHalfInning(state), true);
 
   // 小工具：先處理 runner_advances（from/to；to=4 表本壘；支援 from=0=打者）
