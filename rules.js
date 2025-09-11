@@ -26,126 +26,87 @@
  * PlayEvent.meta（可選）可提供細節，讓規則更精準
  * - for GO:
  *    - doublePlay: true|{order:["2","1"]}  // 例如 6-4-3，先封二再一
- *    - outsOn: ["BR","R1","R2","R3"]       // 指定誰出局（打者BR、壘上跑者 R1/R2/R3）
+ *    - outsOn: ["BR","R1","R2","R3"]       // 指定誰出局（歷史相容；新案建議改在事件分支內處理）
  * - for FO:
  *    - tagUp: {"R3":1,"R2":0,"R1":0}       // 誰在補位後推進，R3:1 代表三壘回本壘得分
- *    - sacrifice: true                     // 視為 SF（高飛犧牲打），會自動判定 R3 得分
+ *    - sacrifice: true                     // 視為 SF（高飛犧牲打）
  * - for FC:
  *    - outLead: "R3"|"R2"|"R1"             // 指定前導跑者被抓
- *    - batterSafeBase: 1                   // 打者上壘壘位（默認 1）
- * - for BB/HBP:
- *    - rbi: number                         // 少見但允許指定是否記分（默認按強迫進壘推斷）
- * @typedef {Object} Meta
- * @typedef {{from: 0|1|2|3, to: 1|2|3|4|"H"}} RunnerAdvance  // from=0 代表打者
- * @typedef {{ts?:string, event?:string, code:EventCode, runner_advances?: RunnerAdvance[], meta?:any}} PlayEvent
+ *
+ * ✅ 新版 runner_advances 規格（僅限安打分支預處理）：
+ *   from ∈ {"first","second","third"}
+ *   to   ∈ {"second","third","home","out"}
+ *   （不再支援 0/1/2/3/4/H/batter/BR/out:true 等舊寫法）
+ *
+ * @typedef {"first"|"second"|"third"} FromBase
+ * @typedef {"second"|"third"|"home"|"out"} ToBase
+ * @typedef {{ from: FromBase, to: ToBase }} RunnerAdvance
+ * @typedef {{ ts?:string, event?:string, code:EventCode, runner_advances?: RunnerAdvance[], meta?:any }} PlayEvent
  */
-
-/** @typedef {{ts?:string,raw?:string,code:EventCode,meta?:any}} PlayEvent */
 
 /** @typedef {{
  * inning:number, half:Half, outs:number, bases:Bases,
  * linescore:Linescore, batting:Side, count:{balls:number,strikes:number}
  * }} GameState */
 
-export function initialState() {
-  return {
-    inning: 1,
-    half: "TOP",
-    outs: 0,
-    bases: { on1:false, on2:false, on3:false },
-    linescore: { away:[], home:[] },
-    batting: "away",
-    count: { balls: 0, strikes: 0 }   // ✅ 新增：球數
-  };
-}
+/* ====================== 低層工具（新版壘位 API） ====================== */
 
-function scoreRun(state, n) {
-  if (n <= 0) return;
-  const arr = state.linescore[state.batting];
-  while (arr.length < state.inning) arr.push(0);
-  arr[state.inning - 1] += n;
-}
-
-function resetCount(state) {
-  if (!state.count) state.count = { balls: 0, strikes: 0 };
-  state.count.balls = 0;
-  state.count.strikes = 0;
-}
-
-function switchHalfInning(state) {
-  state.outs = 0;
-  state.bases = { on1:false, on2:false, on3:false };
-  resetCount(state); // ✅ 換半局清空球數
-  if (state.half === "TOP") { state.half = "BOTTOM"; state.batting = "home"; }
-  else { state.half = "TOP"; state.batting = "away"; state.inning += 1; }
-}
-
-function basesStr(b) {
-  return (b.on1?'1':'-') + (b.on2?'2':'-') + (b.on3?'3':'-');
-}
-
-// -- 低層工具 -----------------------------------------------------------------
-function out(state, n=1) {
-  state.outs += n;
-  if (state.outs >= 3) { switchHalfInning(state); return true; }
+/** 內部布林壘 → 字串壘位工具 */
+function hasBase(bases, k /* "first"|"second"|"third" */){
+  if (k === "first")  return bases.on1;
+  if (k === "second") return bases.on2;
+  if (k === "third")  return bases.on3;
   return false;
 }
-
-// 按強迫進壘鏈移動，回傳此過程產生的得分
-function forceAdvanceChain(b) {
-  let runs = 0;
-  // 滿壘且打者/一壘被擠 → 擠回 1 分
-  if (b.on1 && b.on2 && b.on3) runs++;
-  // 從後往前推
-  if (b.on2 && b.on1) { b.on3 = true; b.on2 = false; }
-  if (b.on1) { b.on2 = true; b.on1 = false; }
-  // 由呼叫者決定打者是否佔 1 壘
-  return runs;
+function setBase(bases, k){
+  if (k === "first")  bases.on1 = true;
+  if (k === "second") bases.on2 = true;
+  if (k === "third")  bases.on3 = true;
+}
+function clearBase(bases, k){
+  if (k === "first")  bases.on1 = false;
+  if (k === "second") bases.on2 = false;
+  if (k === "third")  bases.on3 = false;
 }
 
-// 進壘：把 fromBase 移到 toBase（1/2/3/H），回傳是否得分
-function advanceOne(b, fromBase, toBase) {
-  // 清 from
-  if (fromBase === 1) b.on1 = false;
-  else if (fromBase === 2) b.on2 = false;
-  else if (fromBase === 3) b.on3 = false;
-  // 設 to
-  if (toBase === 'H') return 1; // 得分
-  if (toBase === 1) b.on1 = true;
-  if (toBase === 2) b.on2 = true;
-  if (toBase === 3) b.on3 = true;
+/**
+ * 單一跑者進壘（使用新詞彙）
+ * @param {GameState} state
+ * @param {FromBase} from  "first"|"second"|"third"
+ * @param {ToBase}   to    "second"|"third"|"home"|"out"
+ * @returns {number}       是否得分（0/1）
+ */
+function advanceOneNew(state, from, to){
+  const b = state.bases;
+  // 清除起點
+  clearBase(b, from);
+
+  if (to === "out") {
+    // 記一個出局；可能引發換半局
+    out(state, 1);
+    return 0;
+  }
+  if (to === "home") {
+    // 得 1 分
+    return 1;
+  }
+  // 其他壘位落點
+  setBase(b, to);
   return 0;
 }
 
-// 安打進壘（簡化常規）
-function applyHit(state, kind) {
-  const b = state.bases;
+/** 強迫進壘鏈（不處理「打者」；只擠壘上跑者） */
+function forceAdvanceChain(b) {
   let runs = 0;
+  if (b.on1 && b.on2 && b.on3) runs++;  // 滿壘擠回 1 分
+  if (b.on2 && b.on1) { b.on3 = true; b.on2 = false; }
+  if (b.on1) { b.on2 = true; b.on1 = false; }
+  return runs;
+}
 
-  if (kind === "1B") {
-    if (b.on3) runs += advanceOne(b, 3, 'H');
-    if (b.on2) advanceOne(b, 2, 3);
-    if (b.on1) advanceOne(b, 1, 2);
-    b.on1 = true; // batter to 1st
-  }
-  else if (kind === "2B") {
-    if (b.on3) runs += advanceOne(b, 3, 'H');
-    if (b.on2) runs += advanceOne(b, 2, 'H');
-    if (b.on1) { advanceOne(b, 1, 3); }
-    b.on2 = true; b.on1 = false;
-  }
-  else if (kind === "3B") {
-    if (b.on3) runs += advanceOne(b, 3, 'H');
-    if (b.on2) runs += advanceOne(b, 2, 'H');
-    if (b.on1) runs += advanceOne(b, 1, 'H');
-    b.on1=b.on2=false; b.on3=true;
-  }
-  else if (kind === "HR") {
-    runs += (b.on1?1:0) + (b.on2?1:0) + (b.on3?1:0) + 1;
-    b.on1=b.on2=b.on3=false;
-  }
-
-  if (runs) scoreRun(state, runs);
+/** UI 觀察用：輸出 "1/-" 風格（不影響新規格） */
+function basesStr(b) {
+  return (b.on1?'1':'-') + (b.on2?'2':'-') + (b.on3?'3':'-');
 }
 
 // -- 規則主體 -----------------------------------------------------------------
