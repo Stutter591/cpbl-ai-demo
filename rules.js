@@ -38,10 +38,9 @@
  *   to   ∈ {"second","third","home","out"}
  *   （不再支援 0/1/2/3/4/H/batter/BR/out:true 等舊寫法）
  *
- * @typedef {"first"|"second"|"third"} FromBase
- * @typedef {"second"|"third"|"home"|"out"} ToBase
- * @typedef {{ from: FromBase, to: ToBase }} RunnerAdvance
- * @typedef {{ ts?:string, event?:string, code:EventCode, runner_advances?: RunnerAdvance[], meta?:any }} PlayEvent
+ * @typedef {{from:"first"|"second"|"third", to:"second"|"third"|"home"|"out"}} RunnerAdvance
+ * @typedef {{ts?:string, event?:string, code:EventCode, runner_advances?: RunnerAdvance[], meta?:any}} PlayEvent
+
  */
 
 /** @typedef {{
@@ -72,13 +71,17 @@ function clearBase(bases, k){
 /**
  * 單一跑者進壘（使用新詞彙）
  * @param {GameState} state
- * @param {FromBase} from  "first"|"second"|"third"
- * @param {ToBase}   to    "second"|"third"|"home"|"out"
- * @returns {number}       是否得分（0/1）
+ * @param {"first"|"second"|"third"} from
+ * @param {"second"|"third"|"home"|"out"} to
+ * @returns {number} 是否得分（0/1）— 這裡已內建記分
  */
 function advanceOneNew(state, from, to){
   const b = state.bases;
-  // 清除起點
+
+  // 沒有人就不動，避免清空不存在的跑者
+  if (!hasBase(b, from)) return 0;
+
+  // 先清除起點
   clearBase(b, from);
 
   if (to === "out") {
@@ -87,15 +90,17 @@ function advanceOneNew(state, from, to){
     return 0;
   }
   if (to === "home") {
-    // 得 1 分
+    // 直接記 1 分（此函式已負責記分）
+    scoreRun(state, 1);
     return 1;
   }
+
   // 其他壘位落點
   setBase(b, to);
   return 0;
 }
 
-/** 強迫進壘鏈（不處理「打者」；只擠壘上跑者） */
+/** 強迫進壘鏈（不處理打者；只擠壘上跑者） */
 function forceAdvanceChain(b) {
   let runs = 0;
   if (b.on1 && b.on2 && b.on3) runs++;  // 滿壘擠回 1 分
@@ -104,7 +109,7 @@ function forceAdvanceChain(b) {
   return runs;
 }
 
-/** UI 觀察用：輸出 "1/-" 風格（不影響新規格） */
+/** UI 觀察用：輸出 "1-2-3" 風格字串（僅顯示用；與新規格相容） */
 function basesStr(b) {
   return (b.on1?'1':'-') + (b.on2?'2':'-') + (b.on3?'3':'-');
 }
@@ -115,26 +120,42 @@ export function applyEvent(state, ev) {
   const b = state.bases;
   const code = ev.code;
   const meta = ev.meta || {};                 // GO/FO/FC/DP 用得到
-  const advances = ev.runner_advances || [];  // 一律當陣列處理（預設空陣列）
+  const advances = Array.isArray(ev.runner_advances) ? ev.runner_advances : [];  // 一律當陣列處理（預設空陣列）
   const endIf3 = () => (state.outs >= 3) && (switchHalfInning(state), true);
 
-  // 小工具：先處理 runner_advances（from/to；to=4 表本壘；支援 from=0=打者）
+  // 小工具：先處理 runner_advances（新詞彙 only）
+  // from:  "first"|"second"|"third"
+  // to:    "second"|"third"|"home"|"out"
+  // 規則：third → second → first 的順序處理，避免覆蓋；任何一次導致第 3 個出局會立即停止。
   function applyAdvancesPre(advList) {
-    if (!advList || !Array.isArray(advList) || advList.length === 0) return new Set();
-    // 先從 3,2,1,0 的順序推，避免覆蓋
-    const list = advList.slice().sort((a,b)=>((b?.from ?? 0) - (a?.from ?? 0)));
-    let runs = 0;
-    const handledFrom = new Set();
-    for (const adv of list) {
-      if (!adv || typeof adv.to === 'undefined') continue;
-      const from = (typeof adv.from === 'number') ? adv.from : 0;  // 0=BR
-      const toBase = (adv.to === 4) ? 'H' : adv.to;
-      runs += advanceOne(b, from, toBase);
-      handledFrom.add(from);
+    if (!Array.isArray(advList) || advList.length === 0) return new Set();
+  
+    const order = { third: 3, second: 2, first: 1 };
+    const validFrom = new Set(["first","second","third"]);
+    const validTo   = new Set(["second","third","home","out"]);
+  
+    // 依照壘位由高到低處理
+    const list = advList
+      .filter(a => a && validFrom.has(a.from) && validTo.has(a.to))
+      .sort((a,b) => (order[b.from] || 0) - (order[a.from] || 0));
+  
+    const handled = new Set(); // Set<"first"|"second"|"third">
+  
+    for (const a of list) {
+      // 已處理過該 from 就略過（避免重複宣告）
+      if (handled.has(a.from)) continue;
+  
+      // 進壘（advanceOneNew 會自動處理得分/出局）
+      advanceOneNew(state, a.from, a.to);
+      handled.add(a.from);
+  
+      // 若已形成三出局，立即停止（避免多餘推進）
+      if (state.outs >= 3) break;
     }
-    if (runs) scoreRun(state, runs);
-    return handledFrom; // 回傳已經由 advances 處理過的 from 壘位集合
+  
+    return handled;
   }
+
 
   switch (code) {
 
@@ -176,37 +197,44 @@ export function applyEvent(state, ev) {
     case "2B":
     case "3B":
     case "HR": {
-      const beforeBases = JSON.parse(JSON.stringify(b)); // 事件發生前的壘包快照
-      const step = (code === "1B" ? 1 : code === "2B" ? 2 : code === "3B" ? 3 : 4);
-
-      // 1) 先處理 runner_advances（優先）
-      const handledFrom = applyAdvancesPre(advances);
-
-      // 2) 對「未在 advances 指定」的跑者，依照 before 狀態套用預設推進
-      let addRuns = 0;
-
-      // 依 3→2→1 順序避免覆蓋
-      if (beforeBases.on3 && !handledFrom.has(3)) {
-        const dest = 3 + step;
-        addRuns += advanceOne(b, 3, dest >= 4 ? 'H' : dest);
+      // 事件發生前的壘包快照（避免被後續位移影響判斷）
+      const beforeBases = { on1: b.on1, on2: b.on2, on3: b.on3 };
+    
+      // 1) 先處理 runner_advances（只吃新詞彙 first/second/third → second/third/home/out）
+      const handled = applyAdvancesPre(advances);
+    
+      // 2) 對「未在 runner_advances 指定」的跑者，依照【事件發生前】的壘上狀態套用預設推進
+      if (code === "1B") {
+        if (beforeBases.on3 && !handled.has("third"))  advanceOneNew(state, "third",  "home");
+        if (beforeBases.on2 && !handled.has("second")) advanceOneNew(state, "second", "third");
+        if (beforeBases.on1 && !handled.has("first"))  advanceOneNew(state, "first",  "second");
+        // 打者一壘安打 → 直接佔一壘（不透過 runner_advances，也不呼叫 advanceOneNew）
+        b.on1 = true;
+    
+      } else if (code === "2B") {
+        if (beforeBases.on3 && !handled.has("third"))  advanceOneNew(state, "third",  "home");
+        if (beforeBases.on2 && !handled.has("second")) advanceOneNew(state, "second", "home");
+        if (beforeBases.on1 && !handled.has("first"))  advanceOneNew(state, "first",  "third");
+        // 打者二壘安打 → 直接佔二壘
+        b.on1 = false; b.on2 = true;
+    
+      } else if (code === "3B") {
+        if (beforeBases.on3 && !handled.has("third"))  advanceOneNew(state, "third",  "home");
+        if (beforeBases.on2 && !handled.has("second")) advanceOneNew(state, "second", "home");
+        if (beforeBases.on1 && !handled.has("first"))  advanceOneNew(state, "first",  "home");
+        // 打者三壘安打 → 直接佔三壘
+        b.on1 = false; b.on2 = false; b.on3 = true;
+    
+      } else if (code === "HR") {
+        // 沒被指定的壘上跑者都回本
+        if (beforeBases.on1 && !handled.has("first"))  advanceOneNew(state, "first",  "home");
+        if (beforeBases.on2 && !handled.has("second")) advanceOneNew(state, "second", "home");
+        if (beforeBases.on3 && !handled.has("third"))  advanceOneNew(state, "third",  "home");
+        // 打者本壘打：+1 分（打者不透過 runner_advances；直接加分並清空壘）
+        scoreRun(state, 1);
+        b.on1 = b.on2 = b.on3 = false;
       }
-      if (beforeBases.on2 && !handledFrom.has(2)) {
-        const dest = 2 + step;
-        addRuns += advanceOne(b, 2, dest >= 4 ? 'H' : dest);
-      }
-      if (beforeBases.on1 && !handledFrom.has(1)) {
-        const dest = 1 + step;
-        addRuns += advanceOne(b, 1, dest >= 4 ? 'H' : dest);
-      }
-
-      // 打者（BR: from=0）若未由 advances 指定，依預設上壘/回本
-      if (!handledFrom.has(0)) {
-        if (step >= 4) addRuns += advanceOne(b, 0, 'H');
-        else addRuns += advanceOne(b, 0, step);
-      }
-
-      if (addRuns) scoreRun(state, addRuns);
-
+    
       resetCount(state); // 打席結束
       break;
     }
@@ -234,33 +262,42 @@ export function applyEvent(state, ev) {
       if (meta.doublePlay && state.outs <= 1 && (b.on1 || meta.outsOn?.includes("R1"))) {
         if (b.on1) { b.on1 = false; }
         state.outs += 2;
-        let runs = 0;
-        if (b.on3 && b.on2) { runs += advanceOne(b, 3, 'H'); }
+        if (b.on3 && b.on2) {
+          advanceOneNew(state, "third", "home"); // 三壘跑回本壘得分
+        }
         if (endIf3()) { resetCount(state); break; }
-        if (runs) scoreRun(state, runs);
       } else {
         state.outs += 1;
         if (endIf3()) { resetCount(state); break; }
         const forced = forceAdvanceChain(b);
         scoreRun(state, forced);
       }
-      resetCount(state);                 // 打席結束
+      resetCount(state); // 打席結束
       break;
     }
+
 
     // 飛球出局（FO）
     case "FO": {
       state.outs += 1;
       if (endIf3()) { resetCount(state); break; }
       const tag = meta.tagUp || {};
-      let runs = 0;
-      if (tag.R3 && b.on3) runs += advanceOne(b, 3, tag.R3 >= 1 ? 'H' : 3);
-      if (tag.R2 && b.on2) advanceOne(b, 2, tag.R2 >= 1 ? 3 : 2);
-      if (tag.R1 && b.on1) advanceOne(b, 1, tag.R1 >= 1 ? 2 : 1);
-      if (runs) scoreRun(state, runs);
-      resetCount(state);                 // 打席結束
+      if (tag.R3 && b.on3) {
+        if (tag.R3 >= 1) advanceOneNew(state, "third", "home");
+        else advanceOneNew(state, "third", "third");
+      }
+      if (tag.R2 && b.on2) {
+        if (tag.R2 >= 1) advanceOneNew(state, "second", "third");
+        else advanceOneNew(state, "second", "second");
+      }
+      if (tag.R1 && b.on1) {
+        if (tag.R1 >= 1) advanceOneNew(state, "first", "second");
+        else advanceOneNew(state, "first", "first");
+      }
+      resetCount(state); // 打席結束
       break;
     }
+
 
     // 內野飛球必死（IF）
     case "IF": {
@@ -351,13 +388,13 @@ export function applyEvent(state, ev) {
     case "WP":
     case "PB":
     case "BK": {
-      let runs = 0;
-      if (b.on3) runs += advanceOne(b, 3, 'H');
-      if (b.on2 && !b.on3) advanceOne(b, 2, 3);
-      if (b.on1 && !b.on2) advanceOne(b, 1, 2);
-      if (runs) scoreRun(state, runs);
+      // 簡化：R3→home；R2→third（若 third 空）；R1→second（若 second 空）
+      if (state.bases.on3) advanceOneNew(state, "third", "home");
+      if (state.bases.on2 && !state.bases.on3) advanceOneNew(state, "second", "third");
+      if (state.bases.on1 && !state.bases.on2) advanceOneNew(state, "first", "second");
       break;
     }
+
 
     default: break;
   }
