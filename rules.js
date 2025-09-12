@@ -220,7 +220,27 @@ export function applyEvent(state, ev) {
   
     return handled;
   }
-
+  // 通用 runner_advances（新詞彙 only）。回傳是否有處理到至少一筆。
+  function applyRunnerAdvancesLoose(state, advList){
+    if (!Array.isArray(advList) || advList.length === 0) return false;
+  
+    const order = { third:3, second:2, first:1 };
+    const validFrom = new Set(["first","second","third"]);
+    const validTo   = new Set(["second","third","home","out"]);
+  
+    const list = advList
+      .filter(a => a && validFrom.has(a.from) && validTo.has(a.to))
+      .sort((a,b) => (order[b.from]||0) - (order[a.from]||0));
+  
+    let touched = false;
+    for (const a of list){
+      // advanceOneNew 內部會自理得分/出局/第三個出局觸發換半局
+      advanceOneNew(state, a.from, a.to);
+      touched = true;
+      if (state.outs >= 3) break; // 第三個出局就不用再推
+    }
+    return touched;
+  }
 
   switch (code) {
 
@@ -228,6 +248,8 @@ export function applyEvent(state, ev) {
     case "B": { // 壞球
       if (!state.count) state.count = { balls: 0, strikes: 0 };
       state.count.balls = Math.min(4, state.count.balls + 1);
+      // ★ 新增：這球發生的盜壘／牽制成功等跑壘異動
+      applyRunnerAdvancesLoose(state, advances);
       if (state.count.balls >= 4) {
         const forced = forceAdvanceChain(b);
         scoreRun(state, forced);
@@ -460,9 +482,11 @@ export function applyEvent(state, ev) {
       break;
     }
     
-      // 其他雜項事件（不影響比賽狀態）
+    // 其他雜項事件（不影響比賽狀態）
     case "OTHER": {
-      resetCount(state);  // 或者什麼都不做
+      // 預設不做任何事，不重置球數
+      // 但如果 JSON 有帶 runner_advances（例如牽制、跑壘異動），就照著執行
+      applyRunnerAdvancesLoose(state, advances);
       break;
     }
 
