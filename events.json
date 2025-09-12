@@ -11,8 +11,8 @@
   { "event": "擊出中外野高飛球，接殺出局（半局結束）。", "code": "FO", "runner_advances": [] },
 
   
-  { "event": "中外野一壘安打。", "code": "1B", "runner_advances": [] },                          // R1
-  { "event": "左外野一壘安打。", "code": "1B", "runner_advances": [] },                          // R1→2, BR→1
+  { "event": "中外野一壘安打。", "code": "1B", "runner_advances": [] },                          
+  { "event": "左外野一壘安打。", "code": "1B", "runner_advances": [] },             
   {
     "event": "右外野一壘安打；二壘跑者回本壘得分；一壘跑者上三壘。",
     "code": "1B",
@@ -20,28 +20,28 @@
       { "from": "second", "to": "home" },
       { "from": "first",  "to": "third" }
     ]
-  },                                                                                              // ✅ 指定情境
-  { "event": "高飛犧牲打，三壘跑者回本壘得分。", "code": "SF", "runner_advances": [] },      // +1 分，出局 1
-  { "event": "揮棒落空。打者三振出局。", "code": "K", "runner_advances": [] },                 // 出局 2
+  },                                                                                          
+  { "event": "高飛犧牲打，三壘跑者回本壘得分。", "code": "SF", "runner_advances": [] },     
+  { "event": "揮棒落空。打者三振出局。", "code": "K", "runner_advances": [] },              
   { "event": "內野滾地球刺殺出局（半局結束）。", "code": "GO", "runner_advances": [] },
 
 
-  { "event": "中外野全壘打，陽春砲。", "code": "HR", "runner_advances": [] },                  // +1 分
+  { "event": "中外野全壘打，陽春砲。", "code": "HR", "runner_advances": [] },                
   { "event": "游擊方向滾地球出局。", "code": "GO", "runner_advances": [] },
   { "event": "三壘方向滾地球出局。", "code": "GO", "runner_advances": [] },
   { "event": "揮棒落空。打者三振出局（半局結束）。", "code": "K", "runner_advances": [] },
 
-  { "event": "四壞球保送。", "code": "BB", "runner_advances": [] },                             // R1
-  { "event": "盜上二壘。", "code": "SB2", "runner_advances": [] },                              // R1→2
+  { "event": "四壞球保送。", "code": "BB", "runner_advances": [] },                      
+  { "event": "盜上二壘。", "code": "SB2", "runner_advances": [] },                            
   {
     "event": "中外野一壘安打，二壘跑者回本壘得分。",
     "code": "1B",
     "runner_advances": [
       { "from": "second", "to": "home" }
     ]
-  },                                                                                              // +1 分
-  { "event": "右外野高飛球接殺出局。", "code": "FO", "runner_advances": [] },                   // 出局 1
-  { "event": "揮棒落空。打者三振出局。", "code": "K", "runner_advances": [] },                  // 出局 2
+  },                                                                                        
+  { "event": "右外野高飛球接殺出局。", "code": "FO", "runner_advances": [] },                   
+  { "event": "揮棒落空。打者三振出局。", "code": "K", "runner_advances": [] },                 
   { "event": "游擊方向滾地球刺殺出局（半局結束）。", "code": "GO", "runner_advances": [] },
 
 
@@ -53,14 +53,14 @@
 
 
   { "event": "壞球。", "code": "B", "runner_advances": [] },
-  { "event": "四壞球保送。", "code": "BB", "runner_advances": [] },                             // R1
+  { "event": "四壞球保送。", "code": "BB", "runner_advances": [] },                      
   {
     "event": "擊出內野滾地球，趁傳上壘；一壘跑者遭回傳二壘封殺出局。",
     "code": "FC",
     "runner_advances": [
       { "from": "first", "to": "out" }
     ]
-  },                                                                                              // ✅ 指定情境（FC）
-  { "event": "右外野高飛球接殺出局。", "code": "FO", "runner_advances": [] },                   // 出局 2
+  },                                                                                             
+  { "event": "右外野高飛球接殺出局。", "code": "FO", "runner_advances": [] },                  
   { "event": "揮棒落空。打者三振出局（半局結束）。", "code": "K", "runner_advances": [] }
 ]
