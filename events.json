@@ -1,107 +1,1623 @@
 [
-  { "ts":"00:05", "code":"B", "event": "一壞球" },
-  { "ts":"00:07", "code":"S", "event": "一好球" },
-  { "ts":"00:09", "code":"F", "event": "一界外球" },
-  { "ts": "00:10", "code": "BB", "event": "打者保送上一壘" },
-  { "ts": "00:20", "code": "1B", "event": "打者擊出一壘安打" },
-  { "ts": "00:30", "code": "FO", "event": "打者擊出飛球出局" },
-  { "ts": "00:40", "code": "K", "event": "打者三振出局" },
-  { "ts": "00:50", "code": "GO", "event": "打者擊出滾地球出局" },
-
-  { "ts": "01:10", "code": "K", "event": "打者三振出局" },
-  { "ts": "01:20", "code": "BB", "event": "打者保送上一壘" },
-  { "ts": "01:30", "code": "HR", "event": "打者擊出全壘打，帶有兩分打點" },
-  { "ts": "01:40", "code": "FO", "event": "打者擊出飛球出局" },
-
-  { "ts": "02:10", "code": "K", "event": "打者三振出局" },
-  { "ts": "02:20", "code": "2B", "event": "打者擊出二壘安打" },
-  { "ts": "02:30", "code": "FO", "event": "打者擊出飛球出局" },
-  { "ts": "02:40", "code": "GO", "event": "打者擊出滾地球出局" },
-
-  { "ts": "03:10", "code": "1B", "event": "打者擊出一壘安打" },
-  { "ts": "03:20", "code": "SB2", "event": "跑者成功盜上二壘" },
-  { "ts": "03:30", "code": "FO", "event": "外野飛球，二壘跑者趁機推進到三壘", "meta": { "tagUp": { "R2": 1 } } },
-  { "ts": "03:40", "code": "1B", "event": "打者擊出一壘安打" },
-  { "ts": "03:50", "code": "K", "event": "打者三振出局" },
-
-  { "ts": "04:10", "code": "BB", "event": "打者保送上一壘" },
-  { "ts": "04:20", "code": "1B", "event": "打者擊出一壘安打" },
   {
-    "ts": "04:30",
+    "event": "擊出界外球。捕手 接球失誤。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "揮棒落空。 打者出局-三振/遭捕手傳一壘刺殺出局。 1人出局。",
+    "code": "K",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出左外野高飛球， 打者-左外野手 飛球接殺出局。 2人出局。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "揮棒落空。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出中外野高飛球， 打者-中外野手 飛球接殺出局。 3人出局。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。四壞球上壘。",
+    "code": "BB",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "投手牽制一壘跑者",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。 一壘跑者陳晨威 盜壘上二壘。",
+    "code": "B",
+    "runner_advances": [
+      {
+        "from": "first",
+        "to": "second"
+      }
+    ]
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出右外野高飛球，一壘安打 。 二壘跑者陳晨威 上三壘。 一壘跑者林立 因二壘手  傳游擊手失誤上二壘。",
     "code": "1B",
-    "event": "打者擊出一壘安打，二壘跑者回本壘得分，一壘跑者推進到三壘",
-    "meta": {
-      "advances": [
-        { "from": 2, "to": 4 },
-        { "from": 1, "to": 3 },
-        { "from": 0, "to": 1 }
-      ]
-    }
+    "runner_advances": [
+      {
+        "from": "second",
+        "to": "third"
+      },
+      {
+        "from": "first",
+        "to": "second"
+      }
+    ]
   },
-  { "ts": "04:40", "code": "K", "event": "打者三振出局" },
-  { "ts": "04:50", "code": "FO", "event": "打者擊出飛球出局" },
-
-  { "ts": "05:10", "code": "K", "event": "打者三振出局" },
-  { "ts": "05:20", "code": "GO", "event": "打者擊出滾地球出局" },
-  { "ts": "05:30", "code": "FO", "event": "打者擊出飛球出局" },
-
-  { "ts": "06:10", "code": "1B", "event": "打者擊出一壘安打" },
-  { "ts": "06:20", "code": "CS2", "event": "跑者盜壘失敗，在二壘被阻殺" },
-  { "ts": "06:30", "code": "K", "event": "打者三振出局" },
-  { "ts": "06:40", "code": "FO", "event": "打者擊出飛球出局" },
-
-  { "ts": "07:10", "code": "1B", "event": "打者擊出一壘安打" },
   {
-    "ts": "07:20",
-    "code": "FC",
-    "event": "打者擊出內野滾地球，趁傳上一壘；一壘跑者在二壘遭封殺",
-    "meta": { "outLead": "R1" }
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
   },
-  { "ts": "07:30", "code": "1B", "event": "打者擊出一壘安打" },
-  { "ts": "07:40", "code": "FO", "event": "打者擊出飛球出局" },
-
-  { "ts": "08:10", "code": "HR", "event": "打者擊出全壘打" },
-  { "ts": "08:20", "code": "FO", "event": "打者擊出飛球出局" },
-  { "ts": "08:30", "code": "K", "event": "打者三振出局" },
-  { "ts": "08:40", "code": "GO", "event": "打者擊出滾地球出局" },
-
-  { "ts": "09:10", "code": "BB", "event": "打者保送上一壘" },
-  { "ts": "09:20", "code": "GO", "event": "打者擊出滾地球出局" },
-  { "ts": "09:30", "code": "FO", "event": "打者擊出飛球出局" },
-  { "ts": "09:40", "code": "K", "event": "打者三振出局" },
-
-  { "ts": "10:10", "code": "K", "event": "打者三振出局" },
-  { "ts": "10:20", "code": "K", "event": "打者三振出局" },
-  { "ts": "10:30", "code": "FO", "event": "打者擊出飛球出局" },
-
-  { "ts": "11:10", "code": "1B", "event": "打者擊出一壘安打" },
-  { "ts": "11:20", "code": "2B", "event": "打者擊出二壘安打" },
-  { "ts": "11:30", "code": "SF", "event": "高飛犧牲打，三壘跑者回本壘得分" },
-  { "ts": "11:40", "code": "K", "event": "打者三振出局" },
-
-  { "ts": "12:10", "code": "FO", "event": "打者擊出飛球出局" },
-  { "ts": "12:20", "code": "FO", "event": "打者擊出飛球出局" },
-  { "ts": "12:30", "code": "K", "event": "打者三振出局" },
-
-  { "ts": "13:10", "code": "K", "event": "打者三振出局" },
-  { "ts": "13:20", "code": "K", "event": "打者三振出局" },
-  { "ts": "13:30", "code": "FO", "event": "打者擊出飛球出局" },
-
-  { "ts": "14:10", "code": "BB", "event": "打者保送上一壘" },
-  { "ts": "14:20", "code": "DP", "event": "打者擊出滾地球形成雙殺" },
-  { "ts": "14:30", "code": "FO", "event": "打者擊出飛球出局" },
-
-  { "ts": "15:10", "code": "1B", "event": "打者擊出一壘安打" },
-  { "ts": "15:20", "code": "1B", "event": "打者擊出一壘安打" },
-  { "ts": "15:30", "code": "2B", "event": "打者擊出二壘安打" },
-  { "ts": "15:40", "code": "FO", "event": "打者擊出飛球出局" },
-
-  { "ts": "16:10", "code": "1B", "event": "打者擊出一壘安打" },
-  { "ts": "16:20", "code": "K", "event": "打者三振出局" },
-  { "ts": "16:30", "code": "FO", "event": "打者擊出飛球出局" },
-  { "ts": "16:40", "code": "GO", "event": "打者擊出滾地球出局" },
-
-  { "ts": "17:10", "code": "K", "event": "打者三振出局" },
-  { "ts": "17:20", "code": "FO", "event": "打者擊出飛球出局" },
-  { "ts": "17:30", "code": "GO", "event": "打者擊出滾地球出局" }
+  {
+    "event": "擊出中外野高飛球， 打者出局-犧牲飛球出局。1分打點。 1人出局。 二壘跑者林立 上三壘。 三壘跑者陳晨威回本壘得分。",
+    "code": "FO",
+    "runner_advances": [
+      {
+        "from": "third",
+        "to": "home"
+      },
+      {
+        "from": "second",
+        "to": "third"
+      }
+    ]
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出左外野滾地球，一壘安打 。1分打點。 三壘跑者林立回本壘得分。",
+    "code": "1B",
+    "runner_advances": [
+      {
+        "from": "third",
+        "to": "home"
+      }
+    ]
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出左外野高飛球， 打者-左外野手 飛球接殺出局。 2人出局。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出內野滾地球，趁傳上壘。 一壘跑者林泓育-三壘手  傳二壘手封殺出局 3人出局。一壘殘壘。",
+    "code": "FC",
+    "runner_advances": [
+      {
+        "from": "first",
+        "to": "out"
+      }
+    ]
+  },
+  {
+    "event": "更換選手：中外野手-陳晨威=>中外野手-林政華。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出中外野滾地球，一壘安打 。",
+    "code": "1B",
+    "runner_advances": []
+  },
+  {
+    "event": "更換代打：林安可=>陳維祥。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "揮棒落空。 打者出局-三振出局。 1人出局。",
+    "code": "K",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出內野高飛球， 打者-游擊手 飛球接殺出局。 2人出局。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "揮棒落空。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "揮棒落空。 打者出局-三振出局。 3人出局。一壘殘壘。",
+    "code": "K",
+    "runner_advances": []
+  },
+  {
+    "event": "更換守備：陳維祥-=>右外野手。更換投手：宋文華=>鄭澔。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。四壞球上壘。",
+    "code": "BB",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "教練暫停",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。四壞球上壘。 一壘跑者林子偉 上二壘。",
+    "code": "BB",
+    "runner_advances": [
+      {
+        "from": "first",
+        "to": "second"
+      }
+    ]
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出中外野高飛球，一壘安打 。1分打點。 二壘跑者林子偉回本壘得分。 一壘跑者馬傑森 上二壘。 二壘跑者馬傑森 因中外野手 失誤回本壘得分。 一壘跑者宋嘉翔 因中外野手 失誤上二壘。",
+    "code": "1B",
+    "runner_advances": [
+      {
+        "from": "second",
+        "to": "home"
+      },
+      {
+        "from": "first",
+        "to": "home"
+      },
+      {
+        "from": "first",
+        "to": "second"
+      }
+    ]
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。四壞球上壘。",
+    "code": "BB",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出中外野平飛球，一壘安打 。1分打點。 二壘跑者宋嘉翔回本壘得分。 一壘跑者林政華 上三壘。",
+    "code": "1B",
+    "runner_advances": [
+      {
+        "from": "second",
+        "to": "home"
+      },
+      {
+        "from": "first",
+        "to": "third"
+      }
+    ]
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "揮棒落空。 打者出局-三振出局。 1人出局。",
+    "code": "K",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出左外野平飛球，一壘安打 。1分打點。 三壘跑者林政華回本壘得分。 一壘跑者林立 上二壘。",
+    "code": "1B",
+    "runner_advances": [
+      {
+        "from": "third",
+        "to": "home"
+      },
+      {
+        "from": "first",
+        "to": "second"
+      }
+    ]
+  },
+  {
+    "event": "擊出左外野高飛球， 打者-左外野手 飛球接殺出局。 2人出局。 二壘跑者林立 上三壘。",
+    "code": "FO",
+    "runner_advances": [
+      {
+        "from": "second",
+        "to": "third"
+      }
+    ]
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。 打者出局-三振出局。 3人出局。一、三壘殘壘。",
+    "code": "K",
+    "runner_advances": []
+  },
+  {
+    "event": "更換選手：右外野手-林立=>右外野手-鍾玉成。更換投手：邱駿威=>曾家輝。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出內野滾地球， 打者-三壘手  傳一壘手刺殺出局。 1人出局。",
+    "code": "GO",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "揮棒落空。 打者出局-三振出局。 2人出局。",
+    "code": "K",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出內野滾地球， 打者-一壘手 自踩壘包出局。 3人出局。",
+    "code": "GO",
+    "runner_advances": []
+  },
+  {
+    "event": "更換投手：鄭澔=>傅于剛。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出內野高飛球， 打者-游擊手 飛球接殺出局。 1人出局。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出中外野平飛球，一壘安打 。",
+    "code": "1B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出右外野滾地球，一壘安打 。 一壘跑者馬傑森 上二壘。",
+    "code": "1B",
+    "runner_advances": [
+      {
+        "from": "first",
+        "to": "second"
+      }
+    ]
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "揮棒落空。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出內野滾地球，趁傳上壘。 二壘跑者馬傑森 上三壘。 一壘跑者宋嘉翔 因投手  傳游擊手失誤上二壘。",
+    "code": "FC",
+    "runner_advances": [
+      {
+        "from": "second",
+        "to": "third"
+      },
+      {
+        "from": "first",
+        "to": "second"
+      }
+    ]
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出內野滾地球， 三壘跑者馬傑森出局-野手接球自踩壘包(本壘) 2人出局。 打者出局-雙殺打。 3人出局。一、二壘殘壘。",
+    "code": "GO",
+    "runner_advances": [
+      {
+        "from": "third",
+        "to": "out"
+      },
+      {
+        "from": "first",
+        "to": "out"
+      }
+    ]
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出右外野高飛球， 打者-右外野手 飛球接殺出局。 1人出局。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "揮棒落空。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。 打者出局-三振出局。 2人出局。",
+    "code": "K",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "揮棒落空。 打者出局-三振出局。 3人出局。",
+    "code": "K",
+    "runner_advances": []
+  },
+  {
+    "event": "更換選手：游擊手-陳聖平=>游擊手-張皓崴。更換選手：一壘手-林益全=>一壘手-林培緯。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "更換代打：梁家榮=>馮健庭。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "揮棒落空。 打者出局-三振出局。 1人出局。",
+    "code": "K",
+    "runner_advances": []
+  },
+  {
+    "event": "更換代打：林泓育=>廖健富。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出中外野高飛球，一壘安打 。",
+    "code": "1B",
+    "runner_advances": []
+  },
+  {
+    "event": "揮棒落空。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "揮棒落空。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出內野滾地球， 打者出局-雙殺打。 2人出局。 一壘跑者廖健富-一壘手  傳游擊手觸殺出局 3人出局。",
+    "code": "GO",
+    "runner_advances": [
+      {
+        "from": "first",
+        "to": "out"
+      }
+    ]
+  },
+  {
+    "event": "更換守備：馮健庭-=>三壘手。更換守備：廖健富-=>指定打擊。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出左外野高飛球， 打者-左外野手 飛球接殺出局。 1人出局。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出中外野高飛球， 打者-中外野手 飛球接殺出局。 2人出局。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出中外野高飛球， 打者-中外野手 飛球接殺出局。 3人出局。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "更換投手：傅于剛=>李嘉祥。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出內野滾地球， 打者-游擊手  傳一壘手刺殺出局。 1人出局。",
+    "code": "GO",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出左外野高飛球， 打者-左外野手 飛球接殺出局。 2人出局。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出左外野平飛球，一壘安打 。",
+    "code": "1B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出右外野滾地球，一壘安打 。 一壘跑者馬傑森 上二壘。",
+    "code": "1B",
+    "runner_advances": [
+      {
+        "from": "first",
+        "to": "second"
+      }
+    ]
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。 打者出局-三振出局。 3人出局。一、二壘殘壘。",
+    "code": "K",
+    "runner_advances": []
+  },
+  {
+    "event": "更換選手：左外野手-朱育賢=>左外野手-余德龍。更換選手：一壘手-林智平=>一壘手-李勛傑。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "更換代打：柯育民=>林岱安。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出左外野滾地球，一壘安打 。",
+    "code": "1B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出內野滾地球，趁傳上壘。 一壘跑者林岱安-一壘手  傳游擊手封殺出局 1人出局。",
+    "code": "FC",
+    "runner_advances": [
+      {
+        "from": "first",
+        "to": "out"
+      }
+    ]
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出內野高飛球， 打者-二壘手 界外飛球接殺出局。 2人出局。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出內野滾地球， 打者-投手  傳一壘手刺殺出局。 3人出局。一壘殘壘。",
+    "code": "GO",
+    "runner_advances": []
+  },
+  {
+    "event": "更換選手：二壘手-陳重廷=>二壘手-林祖傑。更換守備：林岱安-=>捕手。更換投手：李嘉祥=>姚杰宏。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "揮棒落空。 打者出局-三振出局。 1人出局。",
+    "code": "K",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出右外野高飛球， 打者-右外野手 飛球接殺出局。 2人出局。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出右外野平飛球，一壘安打 。",
+    "code": "1B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出左外野滾地球，一壘安打 。 一壘跑者廖健富 上二壘。",
+    "code": "1B",
+    "runner_advances": [
+      {
+        "from": "first",
+        "to": "second"
+      }
+    ]
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "揮棒落空。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出左外野滾地球，一壘安打 。 二壘跑者廖健富 上三壘。 一壘跑者余德龍 上二壘。",
+    "code": "1B",
+    "runner_advances": [
+      {
+        "from": "second",
+        "to": "third"
+      },
+      {
+        "from": "first",
+        "to": "second"
+      }
+    ]
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出內野滾地球， 打者-二壘手  傳一壘手刺殺出局。 3人出局。一、二、三壘殘壘。",
+    "code": "GO",
+    "runner_advances": []
+  },
+  {
+    "event": "更換選手：捕手-宋嘉翔=>捕手-張閔勛。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "更換代打：胡金龍=>唐肇廷。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "揮棒落空。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。四壞球上壘。",
+    "code": "BB",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出內野滾地球， 一壘跑者唐肇廷-游擊手  傳二壘手封殺出局 1人出局。 打者出局-雙殺打。 2人出局。",
+    "code": "GO",
+    "runner_advances": [
+      {
+        "from": "first",
+        "to": "out"
+      }
+    ]
+  },
+  {
+    "event": "揮棒落空。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出中外野高飛球， 打者-中外野手 飛球接殺出局。 3人出局。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "更換守備：唐肇廷-=>指定打擊。更換投手：姚杰宏=>鄭鈞仁。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "更換代打：馬傑森=>蔡鎮宇。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出左外野平飛球，一壘安打 。",
+    "code": "1B",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出中外野高飛球， 打者-中外野手 飛球接殺出局。 1人出局。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出內野滾地球，趁傳上壘。(樂天桃猿重播輔助判決-改判) 一壘跑者蔡鎮宇-投手  傳游擊手封殺出局 2人出局。",
+    "code": "FC",
+    "runner_advances": [
+      {
+        "from": "first",
+        "to": "out"
+      }
+    ]
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出左外野高飛球， 打者-左外野手 飛球接殺出局。 3人出局。一壘殘壘。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "更換守備：余德龍-左外野手=>游擊手。更換守備：蔡鎮宇-=>左外野手。更換投手：曾家輝=>舒治浩。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出內野高飛球， 打者-三壘手 界外飛球接殺出局。 1人出局。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出左外野平飛球，一壘安打 。",
+    "code": "1B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出左外野平飛球，一壘安打 。 一壘跑者林祖傑 上二壘。",
+    "code": "1B",
+    "runner_advances": [
+      {
+        "from": "first",
+        "to": "second"
+      }
+    ]
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "揮棒落空。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出左外野高飛球， 打者-左外野手 界外飛球接殺出局。 2人出局。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "揮棒落空。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出右外野高飛球， 打者-右外野手 飛球接殺出局。 3人出局。一、二壘殘壘。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "更換投手：鄭鈞仁=>尹柏淮。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出中外野高飛球， 打者-中外野手 飛球接殺出局。 1人出局。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出中外野滾地球，一壘安打 。",
+    "code": "1B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出內野滾地球， 一壘跑者廖健富-三壘手  傳二壘手封殺出局 2人出局。 打者出局-雙殺打。 3人出局。",
+    "code": "GO",
+    "runner_advances": [
+      {
+        "from": "first",
+        "to": "out"
+      }
+    ]
+  },
+  {
+    "event": "更換投手：舒治浩=>温展樂。",
+    "code": "OTHER",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出內野滾地球， 打者-二壘手  傳一壘手刺殺出局。 1人出局。",
+    "code": "GO",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出中外野高飛球， 打者-中外野手 飛球接殺出局。 2人出局。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出界外球。",
+    "code": "F",
+    "runner_advances": []
+  },
+  {
+    "event": "壞球。",
+    "code": "B",
+    "runner_advances": []
+  },
+  {
+    "event": "好球沒揮棒。",
+    "code": "S",
+    "runner_advances": []
+  },
+  {
+    "event": "擊出中外野高飛球， 打者-中外野手 飛球接殺出局。 3人出局。",
+    "code": "FO",
+    "runner_advances": []
+  },
+  {
+    "event": "比賽結束",
+    "code": "END",
+    "runner_advances": []
+  }
 ]
