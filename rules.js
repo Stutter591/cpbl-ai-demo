@@ -394,7 +394,19 @@ export function applyEvent(state, ev) {
       if (state.bases.on1 && !state.bases.on2) advanceOneNew(state, "first", "second");
       break;
     }
+    
+      // 其他雜項事件（不影響比賽狀態）
+    case "OTHER": {
+      resetCount(state);  // 或者什麼都不做
+      break;
+    }
 
+    // 比賽結束
+    case "END": {
+      // 可以標記一下，但基本上就是不再推進狀態
+      resetCount(state);
+      break;
+    }
 
     default: break;
   }
