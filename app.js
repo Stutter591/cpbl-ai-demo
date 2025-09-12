@@ -190,6 +190,7 @@ function next(){ pause(); if(current<frames.length-1) showStep(current+1); }
 
 async function main(){
   try{
+    clearError();  // 呼叫報錯警告
     ensureOutDots(); ensureCountDots();
     const events=await loadEventsWithMeta();
 
@@ -235,6 +236,7 @@ async function main(){
     setVersionText('資料版本：讀取失敗');
     const el = document.getElementById('nowEvent');
     if (el) el.textContent=`❌ 載入或解析 events.json 失敗：${e.message}`;
+    showError(`載入或解析 events.json 失敗：${e.message}`); //報錯Json格式錯誤
     console.error(e);
   }
 }
