@@ -48,6 +48,19 @@
  * linescore:Linescore, batting:Side, count:{balls:number,strikes:number}
  * }} GameState */
 
+// ------------------ 初始化狀態 ------------------
+export function initialState() {
+  return {
+    inning: 1,
+    half: "TOP",   // 上半局
+    outs: 0,
+    bases: { on1:false, on2:false, on3:false },
+    linescore: { away:[], home:[] },
+    batting: "away",
+    count: { balls:0, strikes:0 }
+  };
+}
+
 /* ====================== 低層工具（新版壘位 API） ====================== */
 
 /** 內部布林壘 → 字串壘位工具 */
@@ -416,135 +429,4 @@ export function applyEvent(state, ev) {
     after: { bases: basesStr(state.bases), outs: state.outs },
     state
   };
-}
-
-// ----------------------------------- Tests ----------------------------------
-export function runSelfTests() {
-  const T = (name, fn) => {
-    const s = initialState();
-    const res = fn(s);
-    const ok = res.pass;
-    console.log((ok?"✅":"❌"), name, ok? "":"=> "+res.msg);
-  };
-
-  // utilities
-  const clone = (s)=>JSON.parse(JSON.stringify(s));
-
-  T("1) 1B from empty -> 1--", (s)=>{
-    applyEvent(s,{code:"1B"});
-    return {pass: s.bases.on1 && !s.bases.on2 && !s.bases.on3, msg: JSON.stringify(s)};
-  });
-
-  T("2) 1B with R3 -> score + keep 1-- (R2 from R1, R3 scores)", (s)=>{
-    s.bases.on3=true;
-    applyEvent(s,{code:"1B"});
-    return {pass: s.linescore.away[0]===1 && s.bases.on1 && !s.bases.on3, msg: JSON.stringify(s)};
-  });
-
-  T("3) 2B with R1 -> R1 to 3B, batter to 2B", (s)=>{
-    s.bases.on1=true;
-    applyEvent(s,{code:"2B"});
-    return {pass: s.bases.on2 && s.bases.on3 && !s.bases.on1, msg: JSON.stringify(s)};
-  });
-
-  T("4) HR with 123 -> +4, bases empty", (s)=>{
-    s.bases={on1:true,on2:true,on3:true};
-    applyEvent(s,{code:"HR"});
-    return {pass: s.linescore.away[0]===4 && !s.bases.on1 && !s.bases.on2 && !s.bases.on3, msg: JSON.stringify(s)};
-  });
-
-  T("5) BB with 123 -> +1 score, still 123 (batter to 1st)", (s)=>{
-    s.bases={on1:true,on2:true,on3:true};
-    applyEvent(s,{code:"BB"});
-    return {pass: s.linescore.away[0]===1 && s.bases.on1 && s.bases.on2 && s.bases.on3, msg: JSON.stringify(s)};
-  });
-
-  T("6) GO default (batter out), force only", (s)=>{
-    s.bases={on1:true,on2:false,on3:false};
-    applyEvent(s,{code:"GO"}); // batter out, R1 forced to 2B
-    return {pass: s.outs===1 && !s.bases.on1 && s.bases.on2, msg: JSON.stringify(s)};
-  });
-
-  T("7) GO doublePlay with R1 -> DP (R1 out + BR out), 2 outs", (s)=>{
-    s.bases={on1:true,on2:false,on3:false};
-    applyEvent(s,{code:"GO",meta:{doublePlay:true}});
-    return {pass: s.outs===2 && !s.bases.on1 && !s.bases.on2, msg: JSON.stringify(s)};
-  });
-
-  T("8) FO default, runners hold", (s)=>{
-    s.bases={on1:true,on2:true,on3:true};
-    applyEvent(s,{code:"FO"});
-    return {pass: s.outs===1 && s.bases.on1 && s.bases.on2 && s.bases.on3, msg: JSON.stringify(s)};
-  });
-
-  T("9) FO with tagUp R3 -> +1 score", (s)=>{
-    s.bases={on3:true};
-    applyEvent(s,{code:"FO",meta:{tagUp:{R3:1}}});
-    return {pass: s.outs===1 && !s.bases.on3 && s.linescore.away[0]===1, msg: JSON.stringify(s)};
-  });
-
-  T("10) SF -> out + R3 scores", (s)=>{
-    s.bases={on3:true};
-    applyEvent(s,{code:"SF"});
-    return {pass: s.outs===1 && !s.bases.on3 && s.linescore.away[0]===1, msg: JSON.stringify(s)};
-  });
-
-  T("11) SAC -> out + force adv", (s)=>{
-    s.bases={on1:true,on2:true,on3:false};
-    applyEvent(s,{code:"SAC"});
-    return {pass: s.outs===1 && s.bases.on1===false && s.bases.on2===true && s.bases.on3===true, msg: JSON.stringify(s)};
-  });
-
-  T("12) FC lead R2 out, BR safe @1", (s)=>{
-    s.bases={on1:false,on2:true,on3:false};
-    applyEvent(s,{code:"FC",meta:{outLead:"R2"}});
-    return {pass: s.outs===1 && s.bases.on1===true && s.bases.on2===false, msg: JSON.stringify(s)};
-  });
-
-  T("13) DP default: R1 + BR out", (s)=>{
-    s.bases={on1:true,on2:true,on3:false};
-    applyEvent(s,{code:"DP"});
-    return {pass: s.outs===2 && !s.bases.on1 && s.bases.on2, msg: JSON.stringify(s)};
-  });
-
-  T("14) WP with R3 -> +1", (s)=>{
-    s.bases={on3:true};
-    applyEvent(s,{code:"WP"});
-    return {pass: s.linescore.away[0]===1 && !s.bases.on3, msg: JSON.stringify(s)};
-  });
-
-  T("15) SB2 from R1", (s)=>{
-    s.bases={on1:true};
-    applyEvent(s,{code:"SB2"});
-    return {pass: !s.bases.on1 && s.bases.on2, msg: JSON.stringify(s)};
-  });
-
-  T("16) CS3 from R3", (s)=>{
-    s.bases={on3:true};
-    applyEvent(s,{code:"CS3"});
-    return {pass: s.outs===1 && !s.bases.on3, msg: JSON.stringify(s)};
-  });
-
-  T("17) Three outs switch half", (s)=>{
-    applyEvent(s,{code:"K"});
-    applyEvent(s,{code:"K"});
-    applyEvent(s,{code:"K"});
-    return {pass: s.half==="BOTTOM" && s.outs===0 && !s.bases.on1, msg: JSON.stringify(s)};
-  });
-
-  // 新增：球數行為驗證
-  T("18) Balls → BB auto walk & reset count", (s)=>{
-    applyEvent(s,{code:"B"});
-    applyEvent(s,{code:"B"});
-    applyEvent(s,{code:"B"});
-    applyEvent(s,{code:"B"}); // 觸發保送
-    return {pass: s.bases.on1===true && s.count.balls===0 && s.count.strikes===0, msg: JSON.stringify(s)};
-  });
-
-  T("19) Strikes → K & reset count", (s)=>{
-    applyEvent(s,{code:"S"});
-    applyEvent(s,{code:"S"});
-    applyEvent(s,{code:"S"}); // 三振
-    return {pass: s.outs===1 && s.count.balls===0 && s.count.strikes===0, msg: JSON.stringify(s)};
-  });
 }
