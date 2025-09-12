@@ -122,6 +122,22 @@ function out(state, n = 1) {
   }
   return false;
 }
+
+/** 記分：將 n 分加到目前打擊方、目前局數 */
+function scoreRun(state, n) {
+  if (n <= 0) return;
+  const arr = state.linescore[state.batting];
+  while (arr.length < state.inning) arr.push(0);
+  arr[state.inning - 1] += n;
+}
+
+/** 歸零球數（好球/壞球） */
+function resetCount(state) {
+  if (!state.count) state.count = { balls: 0, strikes: 0 };
+  state.count.balls = 0;
+  state.count.strikes = 0;
+}
+
 /** 換半局處理 */
 function switchHalfInning(state) {
   state.outs = 0;
