@@ -369,44 +369,28 @@ export function applyEvent(state, ev) {
       break;
     }
 
-    // 滾地球出局（GO）
+    // 滾地球出局（GO）：打者在一壘被刺殺；其餘跑者維持不動，除非 runner_advances 指定
     case "GO": {
-      if (meta.doublePlay && state.outs <= 1 && (b.on1 || meta.outsOn?.includes("R1"))) {
-        if (b.on1) { b.on1 = false; }
-        state.outs += 2;
-        if (b.on3 && b.on2) {
-          advanceOneNew(state, "third", "home"); // 三壘跑回本壘得分
-        }
-        if (endIf3()) { resetCount(state); break; }
-      } else {
-        state.outs += 1;
-        if (endIf3()) { resetCount(state); break; }
-        const forced = forceAdvanceChain(b);
-        scoreRun(state, forced);
-      }
-      resetCount(state); // 打席結束
+      state.outs += 1;                           // 打者出局（刺殺一壘）
+      if (endIf3()) { resetCount(state); break; }
+    
+      // 想要雙殺就用 runner_advances 明寫 {from:"first", to:"out"} 等
+      applyRunnerAdvancesLoose(state, advances);
+    
+      resetCount(state);
       break;
     }
 
 
-    // 飛球出局（FO）
+    // 飛球出局（FO）：打者出局；跑者原地不動，除非 runner_advances 指定（例：三壘補位回本）
     case "FO": {
-      state.outs += 1;
+      state.outs += 1;                           // 打者出局
       if (endIf3()) { resetCount(state); break; }
-      const tag = meta.tagUp || {};
-      if (tag.R3 && b.on3) {
-        if (tag.R3 >= 1) advanceOneNew(state, "third", "home");
-        else advanceOneNew(state, "third", "third");
-      }
-      if (tag.R2 && b.on2) {
-        if (tag.R2 >= 1) advanceOneNew(state, "second", "third");
-        else advanceOneNew(state, "second", "second");
-      }
-      if (tag.R1 && b.on1) {
-        if (tag.R1 >= 1) advanceOneNew(state, "first", "second");
-        else advanceOneNew(state, "first", "first");
-      }
-      resetCount(state); // 打席結束
+    
+      // 只吃新詞彙 runner_advances；不再讀 meta.tagUp
+      applyRunnerAdvancesLoose(state, advances);
+    
+      resetCount(state);                         // 打席結束
       break;
     }
 
@@ -442,21 +426,32 @@ export function applyEvent(state, ev) {
       break;
     }
 
-    // 野手選擇（FC）
+    // 野手選擇（FC）：預設「前導跑者出局 + 打者安全上一壘」；
+    // 若 runner_advances 已明確標註 to:"out"，則完全以它為準（不再套預設）。
     case "FC": {
-      let outLead = meta.outLead; // "R3"/"R2"/"R1"
-      if (!outLead) outLead = b.on3 ? "R3" : (b.on2 ? "R2" : (b.on1 ? "R1" : null));
-
-      if (outLead === "R3" && b.on3) b.on3 = false;
-      else if (outLead === "R2" && b.on2) b.on2 = false;
-      else if (outLead === "R1" && b.on1) b.on1 = false;
-
-      if (!b.on1) b.on1 = true; // 打者上一壘（簡化）
-      state.outs += 1;
+      const hasExplicitOut =
+        Array.isArray(advances) && advances.some(a => a && a.to === "out");
+    
+      if (hasExplicitOut) {
+        // 由 runner_advances 決定誰出局/誰推進
+        applyRunnerAdvancesLoose(state, advances);
+      } else {
+        // 沒寫誰出局時，給一個合理預設：抓最高壘者 1 個出局
+        if (b.on3) { b.on3 = false; out(state, 1); }
+        else if (b.on2) { b.on2 = false; out(state, 1); }
+        else if (b.on1) { b.on1 = false; out(state, 1); }
+        // 仍允許非出局的推進（若你有給）
+        applyRunnerAdvancesLoose(state, advances);
+      }
+    
+      // FC：打者安全上一壘（除非當下已有人且你用 advances 另外處理）
+      if (!b.on1) b.on1 = true;
+    
       endIf3();
-      resetCount(state);                 // 打席結束
+      resetCount(state);
       break;
     }
+
 
     // 雙殺 / 三殺
     case "DP": {
