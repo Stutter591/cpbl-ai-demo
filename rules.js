@@ -138,11 +138,23 @@ function resetCount(state) {
   state.count.strikes = 0;
 }
 
-/** 換半局處理 */
+// 確保當前打擊方在本局有一個格子（即使 0）
+function ensureInningSlot(state){
+  const arr = state.linescore[state.batting];
+  while (arr.length < state.inning) arr.push(0);
+}
+
+// 換半局的所有處理
 function switchHalfInning(state) {
+  // 先把本半局的格子補上（若本半局沒有得分紀錄，就會補一個 0）
+  ensureInningSlot(state);
+
+  // 清空壘包 / 出局數 / 球數
   state.outs = 0;
   state.bases = { on1: false, on2: false, on3: false };
   resetCount(state);
+
+  // 換半局
   if (state.half === "TOP") {
     state.half = "BOTTOM";
     state.batting = "home";
@@ -456,7 +468,8 @@ export function applyEvent(state, ev) {
 
     // 比賽結束
     case "END": {
-      // 可以標記一下，但基本上就是不再推進狀態
+      // 比賽在半局中途結束，也要把本半局補 0
+      ensureInningSlot(state);
       resetCount(state);
       break;
     }
