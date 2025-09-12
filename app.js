@@ -7,6 +7,16 @@ const fmt = new Intl.DateTimeFormat('zh-TW', { timeZone: tz, dateStyle: 'medium'
 function setVersionText(text){ const el=document.getElementById('version'); if(el) el.textContent=text; }
 async function sha256Short(text){ const enc=new TextEncoder().encode(text); const buf=await crypto.subtle.digest('SHA-256',enc); return Array.from(new Uint8Array(buf)).slice(0,4).map(b=>b.toString(16).padStart(2,'0')).join(''); }
 
+// 報錯更新catch
+function showError(msg){
+  const box = document.getElementById('errorBox');
+  if (box) box.textContent = `❌ ${msg}`;
+}
+function clearError(){
+  const box = document.getElementById('errorBox');
+  if (box) box.textContent = '';
+}
+
 async function loadEventsWithMeta(){
   const url='./events.json';
   const res=await fetch(url,{cache:'no-store'});
