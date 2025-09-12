@@ -87,9 +87,10 @@ function renderStatus(state){
 
 // helper: bases string already in frames; show advances hint
 function formatAdvances(ev) {
-  const adv = ev?.meta?.advances;
+  const adv = ev?.runner_advances;
   if (!Array.isArray(adv) || adv.length === 0) return "";
-  return " [" + adv.map(a => `${a.from}→${a.to}`).join(",") + "]";
+  const zh = { first:"一壘", second:"二壘", third:"三壘", home:"本壘", out:"出局" };
+  return " [" + adv.map(a => `${zh[a.from]||a.from}→${zh[a.to]||a.to}`).join(", ") + "]";
 }
 
 // 現在事件（中文 event）
