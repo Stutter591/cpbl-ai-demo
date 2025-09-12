@@ -113,6 +113,30 @@ function advanceOneNew(state, from, to){
   return 0;
 }
 
+/** 出局處理：加出局數，若滿 3 出局則切換半局 */
+function out(state, n = 1) {
+  state.outs += n;
+  if (state.outs >= 3) {
+    switchHalfInning(state);
+    return true;
+  }
+  return false;
+}
+/** 換半局處理 */
+function switchHalfInning(state) {
+  state.outs = 0;
+  state.bases = { on1: false, on2: false, on3: false };
+  resetCount(state);
+  if (state.half === "TOP") {
+    state.half = "BOTTOM";
+    state.batting = "home";
+  } else {
+    state.half = "TOP";
+    state.batting = "away";
+    state.inning += 1;
+  }
+}
+
 /** 強迫進壘鏈（不處理打者；只擠壘上跑者） */
 function forceAdvanceChain(b) {
   let runs = 0;
