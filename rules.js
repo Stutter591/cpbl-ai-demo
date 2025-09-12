@@ -284,47 +284,72 @@ export function applyEvent(state, ev) {
     case "2B":
     case "3B":
     case "HR": {
-      // 事件發生前的壘包快照（避免被後續位移影響判斷）
-      const beforeBases = { on1: b.on1, on2: b.on2, on3: b.on3 };
+      const b = state.bases;
+      const before = { on1: b.on1, on2: b.on2, on3: b.on3 };
+      const adv = Array.isArray(ev.runner_advances) ? ev.runner_advances : [];
     
-      // 1) 先處理 runner_advances（只吃新詞彙 first/second/third → second/third/home/out）
-      const handled = applyAdvancesPre(advances);
-    
-      // 2) 對「未在 runner_advances 指定」的跑者，依照【事件發生前】的壘上狀態套用預設推進
-      if (code === "1B") {
-        if (beforeBases.on3 && !handled.has("third"))  advanceOneNew(state, "third",  "home");
-        if (beforeBases.on2 && !handled.has("second")) advanceOneNew(state, "second", "third");
-        if (beforeBases.on1 && !handled.has("first"))  advanceOneNew(state, "first",  "second");
-        // 打者一壘安打 → 直接佔一壘（不透過 runner_advances，也不呼叫 advanceOneNew）
-        b.on1 = true;
-    
-      } else if (code === "2B") {
-        if (beforeBases.on3 && !handled.has("third"))  advanceOneNew(state, "third",  "home");
-        if (beforeBases.on2 && !handled.has("second")) advanceOneNew(state, "second", "home");
-        if (beforeBases.on1 && !handled.has("first"))  advanceOneNew(state, "first",  "third");
-        // 打者二壘安打 → 直接佔二壘
-        b.on1 = false; b.on2 = true;
-    
-      } else if (code === "3B") {
-        if (beforeBases.on3 && !handled.has("third"))  advanceOneNew(state, "third",  "home");
-        if (beforeBases.on2 && !handled.has("second")) advanceOneNew(state, "second", "home");
-        if (beforeBases.on1 && !handled.has("first"))  advanceOneNew(state, "first",  "home");
-        // 打者三壘安打 → 直接佔三壘
-        b.on1 = false; b.on2 = false; b.on3 = true;
-    
-      } else if (code === "HR") {
-        // 沒被指定的壘上跑者都回本
-        if (beforeBases.on1 && !handled.has("first"))  advanceOneNew(state, "first",  "home");
-        if (beforeBases.on2 && !handled.has("second")) advanceOneNew(state, "second", "home");
-        if (beforeBases.on3 && !handled.has("third"))  advanceOneNew(state, "third",  "home");
-        // 打者本壘打：+1 分（打者不透過 runner_advances；直接加分並清空壘）
-        scoreRun(state, 1);
+      // ========== ① 打者先依 code 就位（HR 另外處理） ==========
+      if (code === "HR") {
+        // 既有跑者 + 打者全部得分
+        const runs = (before.on1?1:0) + (before.on2?1:0) + (before.on3?1:0) + 1;
+        if (runs) scoreRun(state, runs);
         b.on1 = b.on2 = b.on3 = false;
+        resetCount(state);
+        break;
+      }
+      if (code === "1B") b.on1 = true;
+      if (code === "2B") b.on2 = true;
+      if (code === "3B") b.on3 = true;
+    
+      // ========== ② 做「必要的強迫推進」來消除重疊 ==========
+      // 說明：
+      //  - 1B：用現有的 forceAdvanceChain(b) 直接處理（R1→2、R2→3、滿壘擠回 1 分）
+      //  - 2B：只把 before 的 R3→home、R2→3（R1 不會被強迫；因為打者不佔 1 壘）
+      //  - 3B：只把 before 的 R3→home
+      if (code === "1B") {
+        const forced = forceAdvanceChain(b);
+        if (forced) scoreRun(state, forced);
+      } else if (code === "2B") {
+        if (before.on3) advanceOneNew(state, "third", "home");
+        if (before.on2) advanceOneNew(state, "second", "third");
+      } else if (code === "3B") {
+        if (before.on3) advanceOneNew(state, "third", "home");
       }
     
-      resetCount(state); // 打席結束
+      // 建立「原始壘位 → 目前所在壘位」的映射，用來精準套用 runner_advances
+      /** @type {Record<"first"|"second"|"third", "first"|"second"|"third"|null>} */
+      const posAfterForce = { first: null, second: null, third: null };
+      if (before.on1) posAfterForce.first  = (code === "1B") ? "second" : "first";
+      if (before.on2) posAfterForce.second = (code === "1B" || code === "2B") ? "third" : "second";
+      if (before.on3) {
+        if (code === "1B") posAfterForce.third = "third";
+        if (code === "2B" || code === "3B") posAfterForce.third = null; // 已被推回本壘
+      }
+      // 以實際壘況再做一次校正（避免滿壘擠回分後仍標成 third）
+      if (posAfterForce.first  === "first"  && !b.on1) posAfterForce.first  = null;
+      if (posAfterForce.second === "second" && !b.on2) posAfterForce.second = null;
+      if (posAfterForce.third  === "third"  && !b.on3) posAfterForce.third  = null;
+    
+      // ========== ③ 套用 runner_advances（由高壘位到低壘位），只移「原本就站在壘上的跑者」 ==========
+      const order = { third: 3, second: 2, first: 1 };
+      const list = adv
+        .filter(a => a && (a.from==="first"||a.from==="second"||a.from==="third")
+                     && (a.to==="second"||a.to==="third"||a.to==="home"||a.to==="out"))
+        .sort((a,b)=> order[b.from] - order[a.from]); // third → second → first
+    
+      for (const a of list) {
+        const curPos = posAfterForce[a.from];
+        if (!curPos) continue;                  // 該原始跑者已回本/出局/不存在
+        advanceOneNew(state, curPos, a.to);     // 由目前位置移到目標（advanceOneNew 會處理得分/出局）
+        if (a.to==="home" || a.to==="out") posAfterForce[a.from] = null;
+        else posAfterForce[a.from] = a.to;
+      }
+    
+      // 打席結束
+      resetCount(state);
       break;
     }
+
 
     // 四壞 / 故四 / 觸身
     case "BB":
