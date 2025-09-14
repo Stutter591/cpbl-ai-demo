@@ -256,6 +256,7 @@ export function applyEvent(state, ev) {
         b.on1 = true;            // 打者上一壘
         resetCount(state);       // 打席結束
       }
+      
       break;
     }
 
@@ -277,75 +278,65 @@ export function applyEvent(state, ev) {
       break; // 不結束打席
     }
 
-    /* ========= 打席/比賽事件 ========= */
-
-    // 安打類（若帶 advances：先依 advances 執行，之後再對「未指定者」套用預設推進）
+    // 安打：先決定打者落點（但不立刻佔壘），再處理壘上跑者，最後才把打者放上去
     case "1B":
     case "2B":
     case "3B":
     case "HR": {
-      const b = state.bases;
-      const before = { on1: b.on1, on2: b.on2, on3: b.on3 };
-      const adv = Array.isArray(ev.runner_advances) ? ev.runner_advances : [];
+      const beforeB = { on1: b.on1, on2: b.on2, on3: b.on3 };   // 事件前壘況快照（只用它判斷誰該預設推進）
+      const hitStep = (code === "1B" ? 1 : code === "2B" ? 2 : code === "3B" ? 3 : 4);
     
-      // ========== ① 打者先依 code 就位（HR 另外處理） ==========
-      if (code === "HR") {
-        // 既有跑者 + 打者全部得分
-        const runs = (before.on1?1:0) + (before.on2?1:0) + (before.on3?1:0) + 1;
-        if (runs) scoreRun(state, runs);
-        b.on1 = b.on2 = b.on3 = false;
-        resetCount(state);
-        break;
+      // 1) 先算「使用者指定的 from」，這些跑者預設不自動移動
+      const handledFrom = new Set();
+      if (Array.isArray(advances)) {
+        for (const a of advances) {
+          if (!a) continue;
+          if (a.from === "first" || a.from === "second" || a.from === "third") {
+            handledFrom.add(a.from);
+          }
+        }
       }
-      if (code === "1B") b.on1 = true;
-      if (code === "2B") b.on2 = true;
-      if (code === "3B") b.on3 = true;
     
-      // ========== ② 做「必要的強迫推進」來消除重疊 ==========
-      // 說明：
-      //  - 1B：用現有的 forceAdvanceChain(b) 直接處理（R1→2、R2→3、滿壘擠回 1 分）
-      //  - 2B：只把 before 的 R3→home、R2→3（R1 不會被強迫；因為打者不佔 1 壘）
-      //  - 3B：只把 before 的 R3→home
+      // 2) 對「未被指定」的跑者做預設移動（用事件發生前的壘況判斷）
       if (code === "1B") {
-        const forced = forceAdvanceChain(b);
-        if (forced) scoreRun(state, forced);
+        if (beforeB.on3 && !handledFrom.has("third"))  advanceOneNew(state, "third",  "home");
+        if (beforeB.on2 && !handledFrom.has("second")) advanceOneNew(state, "second", "third");
+        if (beforeB.on1 && !handledFrom.has("first"))  advanceOneNew(state, "first",  "second");
       } else if (code === "2B") {
-        if (before.on3) advanceOneNew(state, "third", "home");
-        if (before.on2) advanceOneNew(state, "second", "third");
+        if (beforeB.on3 && !handledFrom.has("third"))  advanceOneNew(state, "third",  "home");
+        if (beforeB.on2 && !handledFrom.has("second")) advanceOneNew(state, "second", "home");
+        if (beforeB.on1 && !handledFrom.has("first"))  advanceOneNew(state, "first",  "third");
       } else if (code === "3B") {
-        if (before.on3) advanceOneNew(state, "third", "home");
+        if (beforeB.on3 && !handledFrom.has("third"))  advanceOneNew(state, "third",  "home");
+        if (beforeB.on2 && !handledFrom.has("second")) advanceOneNew(state, "second", "home");
+        if (beforeB.on1 && !handledFrom.has("first"))  advanceOneNew(state, "first",  "home");
+      } else if (code === "HR") {
+        // 沒被指定的壘上跑者都回本壘
+        if (beforeB.on1 && !handledFrom.has("first"))  advanceOneNew(state, "first",  "home");
+        if (beforeB.on2 && !handledFrom.has("second")) advanceOneNew(state, "second", "home");
+        if (beforeB.on3 && !handledFrom.has("third"))  advanceOneNew(state, "third",  "home");
       }
     
-      // 建立「原始壘位 → 目前所在壘位」的映射，用來精準套用 runner_advances
-      /** @type {Record<"first"|"second"|"third", "first"|"second"|"third"|null>} */
-      const posAfterForce = { first: null, second: null, third: null };
-      if (before.on1) posAfterForce.first  = (code === "1B") ? "second" : "first";
-      if (before.on2) posAfterForce.second = (code === "1B" || code === "2B") ? "third" : "second";
-      if (before.on3) {
-        if (code === "1B") posAfterForce.third = "third";
-        if (code === "2B" || code === "3B") posAfterForce.third = null; // 已被推回本壘
-      }
-      // 以實際壘況再做一次校正（避免滿壘擠回分後仍標成 third）
-      if (posAfterForce.first  === "first"  && !b.on1) posAfterForce.first  = null;
-      if (posAfterForce.second === "second" && !b.on2) posAfterForce.second = null;
-      if (posAfterForce.third  === "third"  && !b.on3) posAfterForce.third  = null;
-    
-      // ========== ③ 套用 runner_advances（由高壘位到低壘位），只移「原本就站在壘上的跑者」 ==========
-      const order = { third: 3, second: 2, first: 1 };
-      const list = adv
-        .filter(a => a && (a.from==="first"||a.from==="second"||a.from==="third")
-                     && (a.to==="second"||a.to==="third"||a.to==="home"||a.to==="out"))
-        .sort((a,b)=> order[b.from] - order[a.from]); // third → second → first
-    
-      for (const a of list) {
-        const curPos = posAfterForce[a.from];
-        if (!curPos) continue;                  // 該原始跑者已回本/出局/不存在
-        advanceOneNew(state, curPos, a.to);     // 由目前位置移到目標（advanceOneNew 會處理得分/出局）
-        if (a.to==="home" || a.to==="out") posAfterForce[a.from] = null;
-        else posAfterForce[a.from] = a.to;
+      // 3) 再套用 runner_advances（third→second→first 的順序，避免互蓋）
+      if (Array.isArray(advances) && advances.length > 0) {
+        const order = { third:3, second:2, first:1 };
+        const validFrom = new Set(["first","second","third"]);
+        const validTo   = new Set(["second","third","home","out"]);
+        const list = advances
+          .filter(a => a && validFrom.has(a.from) && validTo.has(a.to))
+          .sort((a,b)=> (order[b.from]||0) - (order[a.from]||0));
+        for (const a of list) {
+          advanceOneNew(state, a.from, a.to);
+          if (state.outs >= 3) break; // 若中途形成第三個出局，直接停止
+        }
       }
     
-      // 打席結束
+      // 4) 最後才把「打者」放到對應壘位（HR 直接加 1 分，打者不上壘）
+      if (code === "1B")       { b.on1 = true; }
+      else if (code === "2B")  { b.on2 = true; b.on1 = false; }
+      else if (code === "3B")  { b.on3 = true; b.on1 = b.on2 = false; }
+      else /* HR */            { scoreRun(state, 1); /* 打者得分、不上壘 */ }
+    
       resetCount(state);
       break;
     }
