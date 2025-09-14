@@ -113,6 +113,29 @@ function advanceOneNew(state, from, to){
   return 0;
 }
 
+/** 單一跑者進壘（處理重疊情況，不清空起跑壘包） */
+function advanceOneOverlap(state, from, to){
+  const b = state.bases;
+
+  // 沒有人就不動，避免清空不存在的跑者
+  if (!hasBase(b, from)) return 0;
+
+  if (to === "out") {
+    // 記一個出局；可能引發換半局
+    out(state, 1);
+    return 0;
+  }
+  if (to === "home") {
+    // 直接記 1 分（此函式已負責記分）
+    scoreRun(state, 1);
+    return 1;
+  }
+
+  // 其他壘位落點
+  setBase(b, to);
+  return 0;
+}
+
 /** 出局處理：加出局數，若滿 3 出局則切換半局 */
 function out(state, n = 1) {
   state.outs += n;
@@ -168,9 +191,12 @@ function switchHalfInning(state) {
 /** 強迫進壘鏈（不處理打者；只擠壘上跑者） */
 function forceAdvanceChain(b) {
   let runs = 0;
-  if (b.on1 && b.on2 && b.on3) runs++;  // 滿壘擠回 1 分
-  if (b.on2 && b.on1) { b.on3 = true; b.on2 = false; }
-  if (b.on1) { b.on2 = true; b.on1 = false; }
+  if (b.on3 && b.on2 && b.on1) runs++;
+  if (b.on2 && b.on1) b.on3 = true;
+  if (b.on1) b.on2 = true;
+
+  b.on1 = false; // 清空一壘，因為這裡指處理壘上跑者的情況
+
   return runs;
 }
 
@@ -283,60 +309,57 @@ export function applyEvent(state, ev) {
     case "2B":
     case "3B":
     case "HR": {
-      const beforeB = { on1: b.on1, on2: b.on2, on3: b.on3 };   // 事件前壘況快照（只用它判斷誰該預設推進）
-      const hitStep = (code === "1B" ? 1 : code === "2B" ? 2 : code === "3B" ? 3 : 4);
-    
-      // 1) 先算「使用者指定的 from」，這些跑者預設不自動移動
-      const handledFrom = new Set();
+      if (code === "HR") {
+        // 全壘打：所有人得分
+        let runs = 1; // 打者本身
+        if (b.on1) { runs++; b.on1 = false; }
+        if (b.on2) { runs++; b.on2 = false; }
+        if (b.on3) { runs++; b.on3 = false; }
+        scoreRun(state, runs);
+        resetCount(state);
+        break;
+      }
+      
+      // 判斷上壘是否重疊（例如二壘有人時的二壘安打）
+      let overlap = (code === "3B" && b.on3) || (code === "2B" && b.on2) || (code === "1B" && b.on1);
+      if (code === "3B") { b.on3 = true; }
+      if (code === "2B") { b.on2 = true; }
+      if (code === "1B") { b.on1 = true; }
+
+      // 處理 runner_advances
+      // applyRunnerAdvancesLoose(state, advances);
       if (Array.isArray(advances)) {
-        for (const a of advances) {
-          if (!a) continue;
-          if (a.from === "first" || a.from === "second" || a.from === "third") {
-            handledFrom.add(a.from);
-          }
-        }
-      }
-    
-      // 2) 對「未被指定」的跑者做預設移動（用事件發生前的壘況判斷）
-      if (code === "1B") {
-        if (beforeB.on3 && !handledFrom.has("third"))  advanceOneNew(state, "third",  "home");
-        if (beforeB.on2 && !handledFrom.has("second")) advanceOneNew(state, "second", "third");
-        if (beforeB.on1 && !handledFrom.has("first"))  advanceOneNew(state, "first",  "second");
-      } else if (code === "2B") {
-        if (beforeB.on3 && !handledFrom.has("third"))  advanceOneNew(state, "third",  "home");
-        if (beforeB.on2 && !handledFrom.has("second")) advanceOneNew(state, "second", "home");
-        if (beforeB.on1 && !handledFrom.has("first"))  advanceOneNew(state, "first",  "third");
-      } else if (code === "3B") {
-        if (beforeB.on3 && !handledFrom.has("third"))  advanceOneNew(state, "third",  "home");
-        if (beforeB.on2 && !handledFrom.has("second")) advanceOneNew(state, "second", "home");
-        if (beforeB.on1 && !handledFrom.has("first"))  advanceOneNew(state, "first",  "home");
-      } else if (code === "HR") {
-        // 沒被指定的壘上跑者都回本壘
-        if (beforeB.on1 && !handledFrom.has("first"))  advanceOneNew(state, "first",  "home");
-        if (beforeB.on2 && !handledFrom.has("second")) advanceOneNew(state, "second", "home");
-        if (beforeB.on3 && !handledFrom.has("third"))  advanceOneNew(state, "third",  "home");
-      }
-    
-      // 3) 再套用 runner_advances（third→second→first 的順序，避免互蓋）
-      if (Array.isArray(advances) && advances.length > 0) {
+  
         const order = { third:3, second:2, first:1 };
         const validFrom = new Set(["first","second","third"]);
         const validTo   = new Set(["second","third","home","out"]);
+      
         const list = advances
           .filter(a => a && validFrom.has(a.from) && validTo.has(a.to))
-          .sort((a,b)=> (order[b.from]||0) - (order[a.from]||0));
-        for (const a of list) {
+          .sort((a,b) => (order[b.from]||0) - (order[a.from]||0));
+      
+        for (const a of list){
+          if (overlap && code === "3B" && a.from === "third") {
+            advanceOneOverlap(state, a.from, a.to);
+            overlap = false; // 只處理一次重疊
+            continue;
+          }
+          if (overlap && code === "2B" && a.from === "second") {
+            advanceOneOverlap(state, a.from, a.to);
+            overlap = false; // 只處理一次重疊
+            continue;
+          }
+          if (overlap && code === "1B" && a.from === "first") {
+            advanceOneOverlap(state, a.from, a.to);
+            overlap = false; // 只處理一次重疊
+            continue;
+          }
+
           advanceOneNew(state, a.from, a.to);
-          if (state.outs >= 3) break; // 若中途形成第三個出局，直接停止
+          if (state.outs >= 3) break; // 第三個出局就不用再推
         }
       }
-    
-      // 4) 最後才把「打者」放到對應壘位（HR 直接加 1 分，打者不上壘）
-      if (code === "1B")       { b.on1 = true; }
-      else if (code === "2B")  { b.on2 = true; b.on1 = false; }
-      else if (code === "3B")  { b.on3 = true; b.on1 = b.on2 = false; }
-      else /* HR */            { scoreRun(state, 1); /* 打者得分、不上壘 */ }
-    
+
       resetCount(state);
       break;
     }
