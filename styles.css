@@ -154,6 +154,29 @@ main{
 }
 
 /* ====== 事件下拉清單 ====== */
+/* 容器固定高度，避免 size=10 時撐開排版 */
+.event-picker .select-wrap{
+  position: relative;
+  width: 96px;    /* 與「速度」相近，依需求可微調 */
+  height: 40px;   /* 關閉時( size=1 )的高度，固定住版面 */
+  display: inline-block;
+}
+
+/* select 預設佔滿容器 */
+.event-picker .select-wrap select{
+  width: 100%;
+  height: 100%;
+}
+
+/* 展開為 10 列時，加上 .expanded：改成絕對定位浮在原位上，不推擠周邊 */
+.event-picker .select-wrap select.expanded{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  z-index: 50; /* 確保浮在上方 */
+}
+
 #eventSelect{
   background:#0e223a;
   color:var(--text);

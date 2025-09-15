@@ -125,9 +125,10 @@ function renderEventSelect(frames, currentIdx) {
   if (!sel._bound) {
     sel.size = 1; // 保持「關閉」外觀
 
-    // 點一下展開為 10 列（只有在項目 >10 才有作用）
+    // 點一下展開為 10 列（只有在項目 >10 才有作用，讓 select 絕對定位浮在原位，不推擠排版）
     sel.addEventListener('mousedown', () => {
       if (sel.options.length > 10) sel.size = 10;
+      sel.classList.add('expanded');
     });
 
     // 變更：跳到該事件，然後收起
@@ -138,11 +139,14 @@ function renderEventSelect(frames, currentIdx) {
         showStep(idx); // 跳到選定事件
       }
       sel.size = 1;    // 收起
+      sel.classList.remove('expanded');
       sel.blur();
     });
 
     // 失焦保險，確保收起
-    sel.addEventListener('blur', () => { sel.size = 1; });
+    sel.addEventListener('blur', () => { sel.size = 1; 
+      sel.classList.remove('expanded');
+    });
 
     sel._bound = true;
   }
