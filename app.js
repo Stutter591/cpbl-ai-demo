@@ -268,8 +268,8 @@ async function main(){
     
     // 下拉事件選單的選取項設計
     const sel2 = document.getElementById('eventSelect');
-    if (sel2 && sel2.value !== String(idx)) {
-      sel2.value = String(idx);
+    if (sel2 && sel2.value !== String(current)) {
+      sel2.value = String(current);
       // 若使用者展開選單，也讓目前項目出現在可視範圍（展開時才有感）
       const opt = sel2.options[sel2.selectedIndex];
       if (opt) opt.scrollIntoView({ block: "nearest" });
