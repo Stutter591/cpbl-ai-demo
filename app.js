@@ -257,6 +257,23 @@ async function main(){
     renderEventList(frames, -1);
     renderEventSelect(frames, -1);
 
+    // 事件選單：使用者選了第幾筆事件就跳到那一筆
+    {
+      const sel = document.getElementById('eventSelect');
+      if (sel) {
+        // 一次顯示 10 筆（展開後可滾動），點一下才展開（不設 size 就是原生下拉）
+        // sel.size = 10; // 若你想維持「展開顯示 10 行」才需要；想要原生下拉請註解或移除
+
+        sel.onchange = () => {
+          const idx = Number(sel.value);     // value 是 0-based
+          if (!Number.isNaN(idx)) {
+            pause();                         // 停止自動播放，避免被計時器覆蓋
+            showStep(idx);                   // 跳到該事件
+          }
+        };
+      }
+    }
+    
     // 控制綁定
     document.getElementById('btnPlay').onclick=()=> (timer? pause(): play());
     document.getElementById('btnPrev').onclick=prev;
