@@ -303,6 +303,7 @@ export function applyEvent(state, ev) {
     }
 
     // 安打：先決定打者落點（但不立刻佔壘），再處理壘上跑者，最後才把打者放上去
+    case "E":
     case "1B":
     case "2B":
     case "3B":
@@ -319,10 +320,10 @@ export function applyEvent(state, ev) {
       }
       
       // 判斷上壘是否重疊（例如二壘有人時的二壘安打）
-      let overlap = (code === "3B" && b.on3) || (code === "2B" && b.on2) || (code === "1B" && b.on1);
+      let overlap = (code === "3B" && b.on3) || (code === "2B" && b.on2) || ((code === "1B" || code === "E") && b.on1);
       if (code === "3B") { b.on3 = true; }
       if (code === "2B") { b.on2 = true; }
-      if (code === "1B") { b.on1 = true; }
+      if (code === "1B" || code === "E") { b.on1 = true; }
 
       // 處理 runner_advances
       // applyRunnerAdvancesLoose(state, advances);
@@ -346,7 +347,7 @@ export function applyEvent(state, ev) {
             overlap = false; // 只處理一次重疊
             continue;
           }
-          if (overlap && code === "1B" && a.from === "first") {
+          if (overlap && (code === "1B" || code === "E") && a.from === "first") {
             advanceOneOverlap(state, a.from, a.to);
             overlap = false; // 只處理一次重疊
             continue;
