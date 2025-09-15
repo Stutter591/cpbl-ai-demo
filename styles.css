@@ -166,7 +166,8 @@ main{
   padding:6px;
   box-shadow:var(--shadow);
   /* size=10 會自動算高度，這裡給 min-height 兼容不同瀏覽器字高 */
-  min-height: 280px;
+  min-height: 280px;     /* 約 10 筆 */
+  overflow-y: auto;      /* 超過就滾動 */
 }
 #eventSelect option{
   padding:6px 8px;

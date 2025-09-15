@@ -107,15 +107,19 @@ function formatAdvances(ev) {
 function renderEventSelect(frames, currentIdx){
   const sel = document.getElementById('eventSelect');
   if(!sel) return;
-  // 生成 options
-  sel.innerHTML = "";
-  frames.forEach((f, i) => {
+  // 清空並重建 options（只放數字）
+  const opts = [];
+  for (let i = 0; i < frames.length; i++) {
     const opt = document.createElement('option');
-    opt.value = String(i);
-    const desc = f.event.event || f.event.code;
-    opt.textContent = `#${i+1} ${f.ts || '--:--'}  ${desc}`;
-    sel.appendChild(opt);
-  });
+    opt.value = String(i);     // 0-based value
+    opt.textContent = String(i + 1); // 顯示純數字（1-based）
+    opts.push(opt);
+  }
+  sel.replaceChildren(...opts);
+
+  // 一次顯示 10 筆，超過可滾動
+  sel.size = 10;
+
   // 高亮目前事件
   if (currentIdx >= 0 && currentIdx < sel.options.length) {
     sel.selectedIndex = currentIdx;
