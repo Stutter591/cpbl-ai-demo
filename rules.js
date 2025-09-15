@@ -295,16 +295,18 @@ export function applyEvent(state, ev) {
       applyRunnerAdvancesLoose(state, advances);
       break; // 不結束打席
     }
-
+    
     // 三振
     case "K": {
       out(state, 1);
+      applyRunnerAdvancesLoose(state, advances);
       resetCount(state);
       break;
     }
 
     // 安打：先決定打者落點（但不立刻佔壘），再處理壘上跑者，最後才把打者放上去
     case "E":
+    case "FC":
     case "1B":
     case "2B":
     case "3B":
@@ -321,10 +323,10 @@ export function applyEvent(state, ev) {
       }
       
       // 判斷上壘是否重疊（例如二壘有人時的二壘安打）
-      let overlap = (code === "3B" && b.on3) || (code === "2B" && b.on2) || ((code === "1B" || code === "E") && b.on1);
+      let overlap = (code === "3B" && b.on3) || (code === "2B" && b.on2) || ((code === "1B" || code === "E" || code === "FC") && b.on1);
       if (code === "3B") { b.on3 = true; }
       if (code === "2B") { b.on2 = true; }
-      if (code === "1B" || code === "E") { b.on1 = true; }
+      if (code === "1B" || code === "E" || code === "FC") { b.on1 = true; }
 
       // 處理 runner_advances
       // applyRunnerAdvancesLoose(state, advances);
@@ -348,7 +350,7 @@ export function applyEvent(state, ev) {
             overlap = false; // 只處理一次重疊
             continue;
           }
-          if (overlap && (code === "1B" || code === "E") && a.from === "first") {
+          if (overlap && (code === "1B" || code === "E" || code === "FC") && a.from === "first") {
             advanceOneOverlap(state, a.from, a.to);
             overlap = false; // 只處理一次重疊
             continue;
@@ -431,19 +433,6 @@ export function applyEvent(state, ev) {
       resetCount(state);                 // 打席結束
       break;
     }
-
-    // 野手選擇（FC）：預設「打者安全上一壘」
-    case "FC": {
-      applyRunnerAdvancesLoose(state, advances);
-    
-      // FC：打者安全上一壘
-      if (!b.on1) b.on1 = true;
-    
-      endIf3();
-      resetCount(state);
-      break;
-    }
-
 
     // 雙殺 / 三殺
     case "DP": {
