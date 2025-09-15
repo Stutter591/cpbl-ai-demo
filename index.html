@@ -15,7 +15,7 @@
   <main>
     <!-- 左：記分板 + 播放 + 事件清單 -->
     <section class="card">
-      <h2 class="score-title">記分板（逐局）</h2>
+      <h2 class="score-title">記分板</h2>
       <div id="scoreboard"></div>
 
       <!-- 播放列（樣式由 #controls 控制） -->
@@ -33,6 +33,10 @@
         <span id="evtCounter" style="margin-left:auto;opacity:.75">事件：0 / 0</span>
       </div>
 
+      <!-- 事件下拉清單 -->
+      <label for="eventSelect" class="score-title">事件</label>
+      <select id="eventSelect" size="10"></select>
+      
       <!-- 現在事件（單行文字） -->
       <div id="nowEvent">等待播放…</div>
 
