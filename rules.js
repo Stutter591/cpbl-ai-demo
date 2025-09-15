@@ -286,22 +286,20 @@ export function applyEvent(state, ev) {
       break;
     }
 
-    case "S": { // 好球
-      if (!state.count) state.count = { balls: 0, strikes: 0 };
-      state.count.strikes = Math.min(3, state.count.strikes + 1);
-      if (state.count.strikes >= 3) {
-        out(state, 1);           // 三振出局
-        resetCount(state);       // 打席結束
-      }
-      break;
-    }
-
+    case "S":
     case "F": { // 界外：兩好後不再增加
       if (!state.count) state.count = { balls: 0, strikes: 0 };
       if (state.count.strikes < 2) {
         state.count.strikes += 1;
       }
       break; // 不結束打席
+    }
+
+    // 三振
+    case "K": {
+      out(state, 1);
+      resetCount(state);
+      break;
     }
 
     // 安打：先決定打者落點（但不立刻佔壘），再處理壘上跑者，最後才把打者放上去
@@ -371,13 +369,6 @@ export function applyEvent(state, ev) {
       const forced = forceAdvanceChain(b);
       scoreRun(state, forced);
       b.on1 = true;                      // 打者佔一壘
-      resetCount(state);                 // 打席結束
-      break;
-    }
-
-    // 三振
-    case "K": {
-      out(state, 1);
       resetCount(state);                 // 打席結束
       break;
     }
