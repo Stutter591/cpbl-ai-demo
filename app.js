@@ -103,28 +103,37 @@ function formatAdvances(ev) {
   return " [" + adv.map(a => `${zh[a.from]||a.from}→${zh[a.to]||a.to}`).join(", ") + "]";
 }
 
-// 事件下拉清單：只顯示數字編號
+// 事件下拉清單：只顯示數字編號，點擊展開 10 列，選擇或失焦後收起，並跳到該事件
 function renderEventSelect(frames, currentIdx){
-  const sel = document.getElementById('eventSelect');
-  if(!sel) return;
-  // 清空並重建 options（只放數字）
-  const opts = [];
-  for (let i = 0; i < frames.length; i++) {
-    const opt = document.createElement('option');
-    opt.value = String(i);     // 0-based value
-    opt.textContent = String(i + 1); // 顯示純數字（1-based）
-    opts.push(opt);
-  }
-  sel.replaceChildren(...opts);
+  const eventSel = document.getElementById('eventSelect');
+  if (eventSel) {
+    // 初始維持下拉外觀
+    eventSel.size = 1;
 
-  // 高亮目前事件
-  if (currentIdx >= 0 && currentIdx < sel.options.length) {
-    sel.selectedIndex = currentIdx;
-  } else {
-    sel.selectedIndex = -1;
+    // 只顯示編號的選項已在 renderEventSelect 建好，這裡只負責互動
+    eventSel.addEventListener('mousedown', () => {
+      // 點擊時展開為 10 列（多於 10 才展開）
+      if (eventSel.options.length > 10) eventSel.size = 10;
+    });
+
+    // 選擇變更：跳播 + 收起
+    eventSel.addEventListener('change', () => {
+      const idx = Number(eventSel.value);
+      if (!Number.isNaN(idx)) {
+        pause();        // 停止播放，避免計時器覆蓋
+        showStep(idx);  // 跳到該事件
+      }
+      // 收起
+      eventSel.size = 1;
+      eventSel.blur();
+    });
+    
+    // 失焦：確保收起
+    eventSel.addEventListener('blur', () => {
+      eventSel.size = 1;
+    });
   }
 }
-
 // 現在事件（中文 event）
 function renderNow(frames, idx){
   const el=document.getElementById('nowEvent');

@@ -154,9 +154,18 @@ main{
 }
 
 /* ====== 事件下拉清單 ====== */
-#controls select{
-  background:#0e223a; color:var(--text);
+#eventSelect{
+  background:#0e223a;
+  color:var(--text);
   border:1px solid var(--card-border);
-  border-radius:8px; padding:6px;
+  border-radius:8px;
+  padding:6px 10px;
+  min-width: 72px;       /* 跟速度差不多寬 */
+  box-shadow:none;       /* 拿掉之前卡片陰影 */
 }
-#eventSelect { min-width: 80px; }
+
+/* 展開成清單時（size=10），讓它看起來像下拉面板；高度交給瀏覽器算，每列固定高度 */
+#eventSelect[size="10"]{
+  /* 可視需要加點 z-index，避免被周邊元素覆蓋 */
+  z-index: 5;
+}
