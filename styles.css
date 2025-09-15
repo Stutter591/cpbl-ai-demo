@@ -201,8 +201,18 @@ main{
   box-shadow:none;       /* 拿掉之前卡片陰影 */
 }
 
-/* 展開成清單時（size=10），讓它看起來像下拉面板；高度交給瀏覽器算，每列固定高度 */
-#eventSelect[size="10"]{
-  /* 可視需要加點 z-index，避免被周邊元素覆蓋 */
-  z-index: 5;
+
+/* 控制列裡的所有 label 都用同一套排版（含 速度 / 事件） */
+#controls > label{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;          /* 文字與選單間距 */
+  height: 40px;      /* 與選單高度一致 */
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* 讓所有下拉在關閉狀態時也維持同高 */
+#controls > label select{
+  height: 40px;
 }
