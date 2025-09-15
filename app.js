@@ -250,28 +250,29 @@ async function main(){
     renderEventList(frames, -1);
     renderEventSelect(frames, -1);
 
-    // 下拉清單改變時，跳到指定事件
+    // 下拉事件選單（只顯示數字）
     const sel = document.getElementById('eventSelect');
     if (sel) {
+      // 以 0-based value, 1-based 顯示文字建立選項
+      sel.innerHTML = frames.map((_, i) => `<option value="${i}">${i+1}</option>`).join("");
+    
+      // 監聽：選單變更 → 跳到該事件
       sel.onchange = () => {
         const idx = Number(sel.value);
         if (!Number.isNaN(idx)) {
-          pause();         // 停止播放，避免被計時器覆蓋
-          showStep(idx);   // 跳到該事件
+          pause();        // 停止播放避免被覆蓋
+          showStep(idx);  // 跳到指定事件
         }
       };
     }
     
-    // 同步下拉選單選中狀態
+    // 下拉事件選單的選取項設計
     const sel2 = document.getElementById('eventSelect');
-    if (sel2 && sel2.options.length === frames.length) {
-      sel2.selectedIndex = idx;
-        // 捲動到中間位置，提升可視性
-        const opt = sel2.options[idx];
-        if (opt && opt.offsetTop !== undefined) {
-          const top = opt.offsetTop - (sel2.clientHeight / 2) + (opt.clientHeight / 2);
-          sel2.scrollTop = Math.max(0, top);
-        }
+    if (sel2 && sel2.value !== String(idx)) {
+      sel2.value = String(idx);
+      // 若使用者展開選單，也讓目前項目出現在可視範圍（展開時才有感）
+      const opt = sel2.options[sel2.selectedIndex];
+      if (opt) opt.scrollIntoView({ block: "nearest" });
     }
     
     // 控制綁定
