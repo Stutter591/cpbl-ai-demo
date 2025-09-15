@@ -117,9 +117,6 @@ function renderEventSelect(frames, currentIdx){
   }
   sel.replaceChildren(...opts);
 
-  // 一次顯示 10 筆，超過可滾動
-  sel.size = 10;
-
   // 高亮目前事件
   if (currentIdx >= 0 && currentIdx < sel.options.length) {
     sel.selectedIndex = currentIdx;

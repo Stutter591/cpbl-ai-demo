@@ -154,29 +154,9 @@ main{
 }
 
 /* ====== 事件下拉清單 ====== */
-#eventsCard .score-title{ margin-bottom:12px }
-
-#eventSelect{
-  width:100%;
-  display:block;
-  background:#0e223a;
-  color:var(--text);
+#controls select{
+  background:#0e223a; color:var(--text);
   border:1px solid var(--card-border);
-  border-radius:12px;
-  padding:6px;
-  box-shadow:var(--shadow);
-  /* size=10 會自動算高度，這裡給 min-height 兼容不同瀏覽器字高 */
-  min-height: 280px;     /* 約 10 筆 */
-  overflow-y: auto;      /* 超過就滾動 */
+  border-radius:8px; padding:6px;
 }
-#eventSelect option{
-  padding:6px 8px;
-  white-space:nowrap;
-  text-overflow:ellipsis;
-  overflow:hidden;
-  font-size:14px;
-}
-#eventSelect option:checked{
-  background: rgba(20,184,166,.18); /* var(--accent) 的淡底 */
-}
-
+#eventSelect { min-width: 80px; }
