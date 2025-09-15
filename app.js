@@ -103,7 +103,7 @@ function formatAdvances(ev) {
   return " [" + adv.map(a => `${zh[a.from]||a.from}→${zh[a.to]||a.to}`).join(", ") + "]";
 }
 
-// 事件下拉清單：顯示所有事件、可選擇跳播
+// 事件下拉清單：只顯示數字編號
 function renderEventSelect(frames, currentIdx){
   const sel = document.getElementById('eventSelect');
   if(!sel) return;
@@ -194,6 +194,12 @@ function showStep(idx){
   renderStatus(snap);
   renderNow(frames, idx);
   renderEventList(frames, idx);
+  const sel = document.getElementById('eventSelect');
+    if (sel && sel.value !== String(idx)) {
+      sel.value = String(idx);
+      const opt = sel.options[sel.selectedIndex];
+      if (opt) opt.scrollIntoView({ block: "nearest" });
+  }
 }
 
 function play(){
@@ -250,31 +256,6 @@ async function main(){
     renderEventList(frames, -1);
     renderEventSelect(frames, -1);
 
-    // 下拉事件選單（只顯示數字）
-    const sel = document.getElementById('eventSelect');
-    if (sel) {
-      // 以 0-based value, 1-based 顯示文字建立選項
-      sel.innerHTML = frames.map((_, i) => `<option value="${i}">${i+1}</option>`).join("");
-    
-      // 監聽：選單變更 → 跳到該事件
-      sel.onchange = () => {
-        const idx = Number(sel.value);
-        if (!Number.isNaN(idx)) {
-          pause();        // 停止播放避免被覆蓋
-          showStep(idx);  // 跳到指定事件
-        }
-      };
-    }
-    
-    // 下拉事件選單的選取項設計
-    const sel2 = document.getElementById('eventSelect');
-    if (sel2 && sel2.value !== String(current)) {
-      sel2.value = String(current);
-      // 若使用者展開選單，也讓目前項目出現在可視範圍（展開時才有感）
-      const opt = sel2.options[sel2.selectedIndex];
-      if (opt) opt.scrollIntoView({ block: "nearest" });
-    }
-    
     // 控制綁定
     document.getElementById('btnPlay').onclick=()=> (timer? pause(): play());
     document.getElementById('btnPrev').onclick=prev;
