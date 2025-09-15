@@ -104,34 +104,47 @@ function formatAdvances(ev) {
 }
 
 // 事件下拉清單：只顯示數字編號，點擊展開 10 列，選擇或失焦後收起，並跳到該事件
-function renderEventSelect(frames, currentIdx){
-  const eventSel = document.getElementById('eventSelect');
-  if (eventSel) {
-    // 初始維持下拉外觀
-    eventSel.size = 1;
+function renderEventSelect(frames, currentIdx) {
+  const sel = document.getElementById('eventSelect');
+  if (!sel) return;
 
-    // 只顯示編號的選項已在 renderEventSelect 建好，這裡只負責互動
-    eventSel.addEventListener('mousedown', () => {
-      // 點擊時展開為 10 列（多於 10 才展開）
-      if (eventSel.options.length > 10) eventSel.size = 10;
+  // 1) 建選項：value = 0-based, 顯示 = 1-based（只放純數字）
+  if (sel.options.length !== frames.length) {
+    sel.innerHTML = frames.map((_, i) => `<option value="${i}">${i + 1}</option>`).join('');
+  }
+
+  // 2) 初始選取：如果還沒開始（-1），就先顯示第 1 筆，避免外觀空白
+  if (frames.length > 0) {
+    sel.selectedIndex =
+      (currentIdx >= 0 && currentIdx < frames.length) ? currentIdx : 0;
+  } else {
+    sel.selectedIndex = -1;
+  }
+
+  // 3) 只綁一次互動事件（避免重複綁定）
+  if (!sel._bound) {
+    sel.size = 1; // 保持「關閉」外觀
+
+    // 點一下展開為 10 列（只有在項目 >10 才有作用）
+    sel.addEventListener('mousedown', () => {
+      if (sel.options.length > 10) sel.size = 10;
     });
 
-    // 選擇變更：跳播 + 收起
-    eventSel.addEventListener('change', () => {
-      const idx = Number(eventSel.value);
+    // 變更：跳到該事件，然後收起
+    sel.addEventListener('change', () => {
+      const idx = Number(sel.value);
       if (!Number.isNaN(idx)) {
-        pause();        // 停止播放，避免計時器覆蓋
-        showStep(idx);  // 跳到該事件
+        pause();       // 停止播放，避免計時器覆蓋
+        showStep(idx); // 跳到選定事件
       }
-      // 收起
-      eventSel.size = 1;
-      eventSel.blur();
+      sel.size = 1;    // 收起
+      sel.blur();
     });
-    
-    // 失焦：確保收起
-    eventSel.addEventListener('blur', () => {
-      eventSel.size = 1;
-    });
+
+    // 失焦保險，確保收起
+    sel.addEventListener('blur', () => { sel.size = 1; });
+
+    sel._bound = true;
   }
 }
 // 現在事件（中文 event）
