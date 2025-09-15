@@ -142,14 +142,30 @@ function renderEventList(frames, currentIdx){
   const el = document.getElementById('eventList');
   if(!el) return;
 
-  if (frames.length === 0) {
-    el.textContent = "";
-    return;
-  }
+  const n = frames.length;
+  if (n === 0) { el.textContent = ""; return; }
 
-  // 計算顯示視窗：最多 10 筆，優先顯示「以目前事件為結尾」的視窗
-  let end = (currentIdx >= 0) ? Math.min(frames.length, currentIdx + 1) : Math.min(frames.length, 10);
-  let start = Math.max(0, end - 10);
+  // 決定顯示範圍 [start, end)
+  let start, end;
+
+  if (currentIdx < 0) {
+    // 尚未開始：顯示前 7 筆
+    start = 0;
+    end   = Math.min(n, 7);
+  } else {
+    // 以目前事件為中心：前 3、自己、後 3
+    start = Math.max(0, currentIdx - 3);
+    end   = Math.min(n, currentIdx + 4); // +4 因為 end 為「開區間」
+
+    // 若接近前端或尾端，嘗試補齊到 7 筆
+    if (end - start < 7) {
+      if (start === 0) {
+        end = Math.min(n, start + 7);
+      } else if (end === n) {
+        start = Math.max(0, end - 7);
+      }
+    }
+  }
 
   const slice = frames.slice(start, end);
 
