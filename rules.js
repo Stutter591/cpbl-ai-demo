@@ -292,6 +292,7 @@ export function applyEvent(state, ev) {
       if (state.count.strikes < 2) {
         state.count.strikes += 1;
       }
+      applyRunnerAdvancesLoose(state, advances);
       break; // 不結束打席
     }
 
