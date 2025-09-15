@@ -440,25 +440,11 @@ export function applyEvent(state, ev) {
       break;
     }
 
-    // 野手選擇（FC）：預設「前導跑者出局 + 打者安全上一壘」；
-    // 若 runner_advances 已明確標註 to:"out"，則完全以它為準（不再套預設）。
+    // 野手選擇（FC）：預設「打者安全上一壘」
     case "FC": {
-      const hasExplicitOut =
-        Array.isArray(advances) && advances.some(a => a && a.to === "out");
+      applyRunnerAdvancesLoose(state, advances);
     
-      if (hasExplicitOut) {
-        // 由 runner_advances 決定誰出局/誰推進
-        applyRunnerAdvancesLoose(state, advances);
-      } else {
-        // 沒寫誰出局時，給一個合理預設：抓最高壘者 1 個出局
-        if (b.on3) { b.on3 = false; out(state, 1); }
-        else if (b.on2) { b.on2 = false; out(state, 1); }
-        else if (b.on1) { b.on1 = false; out(state, 1); }
-        // 仍允許非出局的推進（若你有給）
-        applyRunnerAdvancesLoose(state, advances);
-      }
-    
-      // FC：打者安全上一壘（除非當下已有人且你用 advances 另外處理）
+      // FC：打者安全上一壘
       if (!b.on1) b.on1 = true;
     
       endIf3();
