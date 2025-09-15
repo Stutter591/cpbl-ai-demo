@@ -204,10 +204,11 @@ main{
 
 /* 控制列裡的所有 label 都用同一套排版（含 速度 / 事件） */
 #controls > label{
+  position: relative;     /* 新增：讓裡面的 select.expanded 可以絕對定位 */
   display: inline-flex;
   align-items: center;
-  gap: 8px;          /* 文字與選單間距 */
-  height: 40px;      /* 與選單高度一致 */
+  gap: 8px;               /* 文字與選單間距 */
+  height: 40px;           /* 與選單高度一致 */
   line-height: 1;
   vertical-align: middle;
 }
@@ -215,4 +216,18 @@ main{
 /* 讓所有下拉在關閉狀態時也維持同高 */
 #controls > label select{
   height: 40px;
+}
+
+/* 展開（size != 1）時浮在原位上，不推擠周邊 */
+#controls > label select.expanded{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  z-index: 50;
+}
+
+/* （可選）不綁定特定 size 數字：凡展開就給較高層級，避免被遮住 */
+#eventSelect[size]:not([size="1"]){
+  z-index: 50;
 }

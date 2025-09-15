@@ -125,9 +125,10 @@ function renderEventSelect(frames, currentIdx) {
   if (!sel._bound) {
     sel.size = 1; // 保持「關閉」外觀
 
-    // 點一下展開為 10 列（只有在項目 >10 才有作用，讓 select 絕對定位浮在原位，不推擠排版）
+    // 點一下展開為 5 列（最多5列，不足5列就顯示實際數量），讓 select 絕對定位浮在原位，不推擠排版）
     sel.addEventListener('mousedown', () => {
-      if (sel.options.length > 10) sel.size = 10;
+      const n = sel.options.length;
+      if (n > 1) sel.size = Math.min(5, n);
       sel.classList.add('expanded');
     });
 
@@ -299,22 +300,6 @@ async function main(){
     renderEventList(frames, -1);
     renderEventSelect(frames, -1);
 
-    // 事件選單：使用者選了第幾筆事件就跳到那一筆
-    {
-      const sel = document.getElementById('eventSelect');
-      if (sel) {
-        // 一次顯示 10 筆（展開後可滾動），點一下才展開（不設 size 就是原生下拉）
-        // sel.size = 10; // 若你想維持「展開顯示 10 行」才需要；想要原生下拉請註解或移除
-
-        sel.onchange = () => {
-          const idx = Number(sel.value);     // value 是 0-based
-          if (!Number.isNaN(idx)) {
-            pause();                         // 停止自動播放，避免被計時器覆蓋
-            showStep(idx);                   // 跳到該事件
-          }
-        };
-      }
-    }
     
     // 控制綁定
     document.getElementById('btnPlay').onclick=()=> (timer? pause(): play());
