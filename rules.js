@@ -335,8 +335,7 @@ export function applyEvent(state, ev) {
         const validTo   = new Set(["second","third","home","out"]);
       
         const list = advances
-          .filter(a => a && validFrom.has(a.from) && validTo.has(a.to))
-          .sort((a,b) => (order[b.from]||0) - (order[a.from]||0));
+          .filter(a => a && validFrom.has(a.from) && validTo.has(a.to));
       
         for (const a of list){
           if (overlap && code === "3B" && a.from === "third") {
