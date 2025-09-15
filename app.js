@@ -103,6 +103,27 @@ function formatAdvances(ev) {
   return " [" + adv.map(a => `${zh[a.from]||a.from}→${zh[a.to]||a.to}`).join(", ") + "]";
 }
 
+// 事件下拉清單：顯示所有事件、可選擇跳播
+function renderEventSelect(frames, currentIdx){
+  const sel = document.getElementById('eventSelect');
+  if(!sel) return;
+  // 生成 options
+  sel.innerHTML = "";
+  frames.forEach((f, i) => {
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    const desc = f.event.event || f.event.code;
+    opt.textContent = `#${i+1} ${f.ts || '--:--'}  ${desc}`;
+    sel.appendChild(opt);
+  });
+  // 高亮目前事件
+  if (currentIdx >= 0 && currentIdx < sel.options.length) {
+    sel.selectedIndex = currentIdx;
+  } else {
+    sel.selectedIndex = -1;
+  }
+}
+
 // 現在事件（中文 event）
 function renderNow(frames, idx){
   const el=document.getElementById('nowEvent');
@@ -227,7 +248,32 @@ async function main(){
     renderStatus({inning:1,half:"TOP",outs:0,batting:"away",count:{balls:0,strikes:0}});
     renderNow(frames, -1);
     renderEventList(frames, -1);
+    renderEventSelect(frames, -1);
 
+    // 下拉清單改變時，跳到指定事件
+    const sel = document.getElementById('eventSelect');
+    if (sel) {
+      sel.onchange = () => {
+        const idx = Number(sel.value);
+        if (!Number.isNaN(idx)) {
+          pause();         // 停止播放，避免被計時器覆蓋
+          showStep(idx);   // 跳到該事件
+        }
+      };
+    }
+    
+    // 同步下拉選單選中狀態
+    const sel2 = document.getElementById('eventSelect');
+    if (sel2 && sel2.options.length === frames.length) {
+      sel2.selectedIndex = idx;
+        // 捲動到中間位置，提升可視性
+        const opt = sel2.options[idx];
+        if (opt && opt.offsetTop !== undefined) {
+          const top = opt.offsetTop - (sel2.clientHeight / 2) + (opt.clientHeight / 2);
+          sel2.scrollTop = Math.max(0, top);
+        }
+    }
+    
     // 控制綁定
     document.getElementById('btnPlay').onclick=()=> (timer? pause(): play());
     document.getElementById('btnPrev').onclick=prev;
