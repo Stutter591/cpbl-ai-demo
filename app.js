@@ -195,15 +195,14 @@ function renderEventList(frames, currentIdx){
   if(!el) return;
 
   const n = frames.length;
-  if (n === 0) { el.textContent = ""; return; }
+  if (n === 0) { el.textContent = "等待播放…"; return; }
 
   // 決定顯示範圍 [start, end)
   let start, end;
 
   if (currentIdx < 0) {
-    // 尚未開始：顯示前 7 筆
-    start = 0;
-    end   = Math.min(n, 7);
+    el.textContent = "等待播放…";
+    return;
   } else {
     // 以目前事件為中心：前 3、自己、後 3
     start = Math.max(0, currentIdx - 3);
