@@ -154,9 +154,11 @@ function resetCount(state) {
 }
 
 // 確保當前打擊方在本局有一個格子（即使 0）
-function ensureInningSlot(state){
+function ensureInningSlot(state, markAsX = false){
   const arr = state.linescore[state.batting];
-  while (arr.length < state.inning) arr.push(0);
+  while (arr.length < state.inning) {
+    arr.push(markAsX ? "X" : 0);
+  }
 }
 
 // 換半局的所有處理
@@ -450,8 +452,9 @@ export function applyEvent(state, ev) {
 
     // 比賽結束
     case "END": {
-      // 比賽在半局中途結束，也要把本半局補 0
-      ensureInningSlot(state);
+      // 比賽在半局中途結束：下半局主隊不用進攻時標記 "X"，其他情況補 0
+      const shouldMarkX = state.half === "BOTTOM" && state.batting === "home";
+      ensureInningSlot(state, shouldMarkX);
       resetCount(state);
       break;
     }
