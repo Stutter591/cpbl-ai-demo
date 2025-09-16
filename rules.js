@@ -488,6 +488,19 @@ export function applyEvent(state, ev) {
       // 預設不做任何事，不重置球數
       // 但如果 JSON 有帶 runner_advances（例如牽制、跑壘異動），就照著執行
       applyRunnerAdvancesLoose(state, advances);
+
+      const validFrom = new Set(["first","second","third"]);
+      const validTo   = new Set(["second","third","home","out"]);
+
+      const list = advances
+      .filter(a => a && validFrom.has(a.from) && validTo.has(a.to));
+
+      for (const a of list) {
+        if (a.from === a.to) {
+          setBase(b, a.to);
+        }
+      }
+
       break;
     }
 
