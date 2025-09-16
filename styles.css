@@ -138,7 +138,13 @@ main{
 .diamond-line{ stroke:var(--accent); stroke-width:4; fill:none; opacity:.9 }
 
 /* ====== 控制列 / 時間軸 ====== */
-#controls{display:flex; gap:.5rem; align-items:center; padding:0 16px 16px}
+#controls{
+  display:flex;
+  gap:.5rem;
+  align-items:center;
+  padding:0 16px 16px;
+  --control-height:40px;
+}
 #controls button{
   background:#0e223a; color:var(--text); border:1px solid var(--card-border);
   padding:8px 12px; border-radius:10px; cursor:pointer;
@@ -156,31 +162,35 @@ main{
 /* ====== 事件下拉清單 ====== */
 /* 事件 label 與速度對齊：固定高度、水平置中對齊 */
 .event-picker{
-  display: inline-flex;
-  align-items: center;   /* 讓「事件」兩字垂直置中 */
-  gap: 8px;              /* 文字與選單的間距 */
-  height: 56px;          /* 調高容器 */
-  line-height: 1;        /* 避免字體行高把高度撐開 */
-  vertical-align: middle;
-  align-self: flex-start; /* 高度加大時，保持貼齊上緣 */
+  display:inline-flex;
+  align-items:center;   /* 讓「事件」兩字垂直置中 */
+  gap:8px;              /* 文字與選單的間距 */
+  height:var(--control-height);
+  min-height:var(--control-height);
+  line-height:1;        /* 避免字體行高把高度撐開 */
+  vertical-align:middle;
+  align-self:center;    /* 與其他控制元件等高 */
 }
 /* 容器固定高度，避免 size=10 時撐開排版 */
 .event-picker .select-wrap{
-  position: relative;
-  width: 120px;   /* 加寬，讓數字更好辨識 */
-  height: 40px;   /* 與容器高度一致 */
-  display: inline-block;
+  position:relative;
+  width:60px;   /* 依需求調整顯示寬度 */
+  height:var(--control-height);
+  display:inline-block;
 }
 
 /* select 預設佔滿容器 */
 .event-picker .select-wrap select{
-  width: 100%;
+  width:100%;
   background:#0e223a;
-  color: var(--text);
-  border: 1px solid var(--card-border);
-  border-radius: 8px;
-  padding: 10px 14px;
-  transform: translateY(0);
+  color:var(--text);
+  border:1px solid var(--card-border);
+  border-radius:8px;
+  padding:6px 12px;
+  text-align:center;
+  -moz-text-align-last:center;
+  text-align-last:center;
+  transform:translateY(0);
 }
 
 .event-picker .select-wrap select:not(.expanded){
@@ -188,17 +198,8 @@ main{
 }
 
 @media (max-width: 720px){
-  .event-picker{
-    align-self:center;
-    height:40px;
-  }
-  .event-picker .select-wrap{
-    height:40px;
-    width:110px;
-  }
-  .event-picker .select-wrap select{
-    padding:6px 12px;
-  }
+  .event-picker{ align-self:center; }
+  .event-picker .select-wrap{ width:60px; }
 }
 
 /* 展開為 10 列時，加上 .expanded：改成絕對定位浮在原位上，不推擠周邊 */
