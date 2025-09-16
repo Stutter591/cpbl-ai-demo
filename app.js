@@ -126,11 +126,24 @@ function renderEventSelect(frames, currentIdx) {
     sel.size = 1; // 保持「關閉」外觀
 
     // 點一下展開為 5 列（最多5列，不足5列就顯示實際數量），讓 select 絕對定位浮在原位，不推擠排版）
-    sel.addEventListener('mousedown', () => {
+    const expand = () => {
       const n = sel.options.length;
-      if (n > 1) sel.size = Math.min(5, n);
+      if (n <= 1) return;
+      const rows = Math.min(5, n);
+      sel.size = rows;
+      sel.style.setProperty('--event-select-rows', rows);
       sel.classList.add('expanded');
-    });
+    };
+    const ensureExpanded = (event) => {
+      if (!sel.classList.contains('expanded')) {
+        expand();
+        // 某些瀏覽器(Touch) 會立即觸發 blur → 再 focus，延遲一個 tick 確保 size 套上
+        requestAnimationFrame(() => {});
+      }
+    };
+    sel.addEventListener('mousedown', ensureExpanded);
+    sel.addEventListener('focus', ensureExpanded);
+    sel.addEventListener('touchstart', ensureExpanded, { passive: true });
 
     // 變更：跳到該事件，然後收起
     sel.addEventListener('change', () => {
@@ -140,12 +153,14 @@ function renderEventSelect(frames, currentIdx) {
         showStep(idx); // 跳到選定事件
       }
       sel.size = 1;    // 收起
+      sel.style.removeProperty('--event-select-rows');
       sel.classList.remove('expanded');
       sel.blur();
     });
 
     // 失焦保險，確保收起
     sel.addEventListener('blur', () => { sel.size = 1; 
+      sel.style.removeProperty('--event-select-rows');
       sel.classList.remove('expanded');
     });
 
