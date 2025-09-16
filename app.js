@@ -34,7 +34,8 @@ function renderScoreboard(linescore){
   let html="<table><tr><th></th>";
   for(let i=1;i<=maxInning;i++) html+=`<th>${i}</th>`;
   html+="<th>R</th></tr>";
-  const sum=a=>(a||[]).reduce((x,y)=>x+(y||0),0);
+  // 計算總分時忽略 "X"，只計算數字
+  const sum=a=>(a||[]).reduce((x,y)=>x+(typeof y === 'number' ? y : 0),0);
   const row=(team,arr=[])=>`<tr><td>${team}</td>`+[...Array(maxInning)].map((_,i)=>`<td>${arr[i]??""}</td>`).join("")+`<td>${sum(arr)}</td></tr>`;
   html+=row("Away",linescore.away||[]); html+=row("Home",linescore.home||[]); html+="</table>";
   document.getElementById("scoreboard").innerHTML=html;
