@@ -188,6 +188,7 @@ main{
   left: 0;
   top: 0;
   width: 100%;
+  height: auto;        /* 允許展開時依 size 自動拉高 */
   z-index: 50; /* 確保浮在上方 */
 }
 
@@ -208,7 +209,7 @@ main{
   display: inline-flex;
   align-items: center;
   gap: 8px;               /* 文字與選單間距 */
-  height: 40px;           /* 與選單高度一致 */
+  height: auto;           /* 與選單高度一致 */
   line-height: 1;
   vertical-align: middle;
 }
