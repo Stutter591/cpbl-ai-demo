@@ -103,6 +103,16 @@ function formatAdvances(ev) {
   return " [" + adv.map(a => `${zh[a.from]||a.from}→${zh[a.to]||a.to}`).join(", ") + "]";
 }
 
+function scoreToText(linescore){
+  if(!linescore) return "0:0";
+  const sum = arr => Array.isArray(arr)
+    ? arr.reduce((acc,val)=> acc + (Number(val)||0),0)
+    : 0;
+  const away = sum(linescore.away);
+  const home = sum(linescore.home);
+  return `${away}:${home}`;
+}
+
 // 事件下拉清單：只顯示數字編號，點擊展開 10 列，選擇或失焦後收起，並跳到該事件
 function renderEventSelect(frames, currentIdx) {
   const sel = document.getElementById('eventSelect');
@@ -173,9 +183,8 @@ function renderNow(frames, idx){
   if(!el){ return; }
   if(idx<0){ el.textContent="等待播放…"; renderCounter(-1, frames.length); return; }
   const f=frames[idx];
-  const advTxt = formatAdvances(f.event);
-  const desc = f.event.event || f.event.code;
-  el.textContent=`#${idx+1} ${f.ts||'--:--'}  ${desc}  ${f.before.bases}/${f.before.outs} → ${f.after.bases}/${f.after.outs}${advTxt}`;
+  const desc = f.event.event || f.event.code || '';
+  el.textContent = `#${idx+1} ${desc}`.trim();
   renderCounter(idx, frames.length);
 }
 
@@ -214,9 +223,10 @@ function renderEventList(frames, currentIdx){
   const lines = slice.map((f, iInSlice) => {
     const realIndex = start + iInSlice;             // 真實事件序號
     const mark = (realIndex === currentIdx) ? '👉 ' : '   ';
-    const desc = f.event.event || f.event.code;
-    const advTxt = formatAdvances(f.event);
-    return `${mark}#${realIndex+1} ${f.ts||'--:--'}  ${desc}  ${f.before.bases}/${f.before.outs} → ${f.after.bases}/${f.after.outs}${advTxt} | runs:${f.runs}`;
+    const desc = f.event.event || f.event.code || '';
+    const snap = snapshotPerStep[realIndex];
+    const scoreText = `｜目前比分 ${scoreToText(snap?.linescore)}｜`;
+    return `${mark}#${realIndex+1} ${scoreText} ${desc}`.trim();
   });
 
   el.textContent = lines.join("\n");

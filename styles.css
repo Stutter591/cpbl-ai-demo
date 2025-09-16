@@ -25,7 +25,14 @@ header{
   padding:16px 20px; display:flex; align-items:center; gap:12px;
   border-bottom:1px solid var(--card-border);
 }
-header h1{font-size:20px; font-weight:700}
+header h1{
+  margin:0;
+  font-size:20px;
+  font-weight:700;
+  line-height:1.1;
+  display:flex;
+  align-items:center;
+}
 #version{margin-left:auto; opacity:.75}
 
 main{
@@ -150,6 +157,13 @@ main{
   padding:8px 12px; border-radius:10px; cursor:pointer;
 }
 #controls select{background:#0e223a; color:var(--text); border:1px solid var(--card-border); border-radius:8px; padding:6px}
+#evtCounter{
+  margin-left:auto;
+  padding:0 12px;
+  opacity:.75;
+  white-space:nowrap;
+  flex-shrink:0;
+}
 #nowEvent{
   position:relative;
   margin:0 16px 12px;
