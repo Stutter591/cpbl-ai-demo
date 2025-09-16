@@ -7,39 +7,31 @@
 
 /**
  * 標準事件碼（建議從 ASR/NLP 正規化成這些）
- * - GO: 滾地球出局 (默認：打者在一壘出局；可 meta.doublePlay 觸發 DP)
- * - FO: 飛球出局 (默認：跑者不動；可 meta.tagUp 指定帶跑得分/推進)
+ * - GO: 滾地球出局 (默認：打者在一壘出局；可透過 runner_advances 處理雙殺)
+ * - FO: 飛球出局 (默認：跑者不動；可透過 runner_advances 處理補位跑分)
  * - FC: 野手選擇 (通常前導跑者出局、打者上到一壘)
+ * - E: 失誤 (防守失誤導致打者安全上壘)
  * - DP/TP: 雙殺/三殺
+ * - OTHER: 其他雜項事件 (可搭配 runner_advances 處理跑者異動)
+ * - END: 比賽結束
  * 其餘請見下方 switch
  * @typedef {
  *  "1B"|"2B"|"3B"|"HR"|"BB"|"IBB"|"HBP"|
- *  "K"|"GO"|"FO"|"IF"|"SF"|"SAC"|"FC"|
+ *  "K"|"GO"|"FO"|"IF"|"SF"|"SAC"|"FC"|"E"|
  *  "DP"|"TP"|
  *  "SB2"|"SB3"|"SBH"|"CS2"|"CS3"|"PO1"|"PO2"|"PO3"|
- *  "WP"|"PB"|"BK"|
+ *  "WP"|"PB"|"BK"|"OTHER"|"END"|
  *  "B"|"S"|"F"
  * } EventCode
  */
 
 /**
- * PlayEvent.meta（可選）可提供細節，讓規則更精準
- * - for GO:
- *    - doublePlay: true|{order:["2","1"]}  // 例如 6-4-3，先封二再一
- *    - outsOn: ["BR","R1","R2","R3"]       // 指定誰出局（歷史相容；新案建議改在事件分支內處理）
- * - for FO:
- *    - tagUp: {"R3":1,"R2":0,"R1":0}       // 誰在補位後推進，R3:1 代表三壘回本壘得分
- *    - sacrifice: true                     // 視為 SF（高飛犧牲打）
- * - for FC:
- *    - outLead: "R3"|"R2"|"R1"             // 指定前導跑者被抓
- *
- * ✅ 新版 runner_advances 規格（僅限安打分支預處理）：
+ * ✅ 使用 runner_advances 規格（適用於所有事件）：
  *   from ∈ {"first","second","third"}
  *   to   ∈ {"second","third","home","out"}
- *   （不再支援 0/1/2/3/4/H/batter/BR/out:true 等舊寫法）
  *
  * @typedef {{from:"first"|"second"|"third", to:"second"|"third"|"home"|"out"}} RunnerAdvance
- * @typedef {{ts?:string, event?:string, code:EventCode, runner_advances?: RunnerAdvance[], meta?:any}} PlayEvent
+ * @typedef {{ts?:string, event?:string, code:EventCode, runner_advances?: RunnerAdvance[]}} PlayEvent
 
  */
 
@@ -82,7 +74,7 @@ function clearBase(bases, k){
 }
 
 /**
- * 單一跑者進壘（使用新詞彙）
+ * 單一跑者進壘
  * @param {GameState} state
  * @param {"first"|"second"|"third"} from
  * @param {"second"|"third"|"home"|"out"} to
@@ -113,7 +105,7 @@ function advanceOneNew(state, from, to){
   return 0;
 }
 
-/** 單一跑者進壘（處理重疊情況，不清空起跑壘包） */
+/** 單一跑者進壘（處理重疊情況，不清空起跑壘包，用於安打重疊時的特殊處理） */
 function advanceOneOverlap(state, from, to){
   const b = state.bases;
 
@@ -210,43 +202,11 @@ export function applyEvent(state, ev) {
   const before = { bases: basesStr(state.bases), outs: state.outs };
   const b = state.bases;
   const code = ev.code;
-  const meta = ev.meta || {};                 // GO/FO/FC/DP 用得到
   const advances = Array.isArray(ev.runner_advances) ? ev.runner_advances : [];  // 一律當陣列處理（預設空陣列）
   const endIf3 = () => (state.outs >= 3) && (switchHalfInning(state), true);
 
-  // 小工具：先處理 runner_advances（新詞彙 only）
-  // from:  "first"|"second"|"third"
-  // to:    "second"|"third"|"home"|"out"
-  // 規則：third → second → first 的順序處理，避免覆蓋；任何一次導致第 3 個出局會立即停止。
-  function applyAdvancesPre(advList) {
-    if (!Array.isArray(advList) || advList.length === 0) return new Set();
-  
-    const order = { third: 3, second: 2, first: 1 };
-    const validFrom = new Set(["first","second","third"]);
-    const validTo   = new Set(["second","third","home","out"]);
-  
-    // 依照壘位由高到低處理
-    const list = advList
-      .filter(a => a && validFrom.has(a.from) && validTo.has(a.to))
-      .sort((a,b) => (order[b.from] || 0) - (order[a.from] || 0));
-  
-    const handled = new Set(); // Set<"first"|"second"|"third">
-  
-    for (const a of list) {
-      // 已處理過該 from 就略過（避免重複宣告）
-      if (handled.has(a.from)) continue;
-  
-      // 進壘（advanceOneNew 會自動處理得分/出局）
-      advanceOneNew(state, a.from, a.to);
-      handled.add(a.from);
-  
-      // 若已形成三出局，立即停止（避免多餘推進）
-      if (state.outs >= 3) break;
-    }
-  
-    return handled;
-  }
-  // 通用 runner_advances（新詞彙 only）。回傳是否有處理到至少一筆。
+
+  // 通用 runner_advances 。回傳是否有處理到至少一筆。
   function applyRunnerAdvancesLoose(state, advList){
     if (!Array.isArray(advList) || advList.length === 0) return false;
   
@@ -328,8 +288,6 @@ export function applyEvent(state, ev) {
       if (code === "2B") { b.on2 = true; }
       if (code === "1B" || code === "E" || code === "FC") { b.on1 = true; }
 
-      // 處理 runner_advances
-      // applyRunnerAdvancesLoose(state, advances);
       if (Array.isArray(advances)) {
   
         const order = { third:3, second:2, first:1 };
@@ -395,7 +353,6 @@ export function applyEvent(state, ev) {
       state.outs += 1;                           // 打者出局
       if (endIf3()) { resetCount(state); break; }
     
-      // 只吃新詞彙 runner_advances；不再讀 meta.tagUp
       applyRunnerAdvancesLoose(state, advances);
     
       resetCount(state);                         // 打席結束
@@ -436,23 +393,6 @@ export function applyEvent(state, ev) {
 
     // 雙殺 / 三殺
     case "DP": {
-      if (state.outs <= 1) {
-        if (meta && Array.isArray(meta.outsOn)) {
-          for (const who of meta.outsOn.slice(0,2)) {
-            if (who === "R1" && b.on1) b.on1 = false;
-            if (who === "R2" && b.on2) b.on2 = false;
-            if (who === "R3" && b.on3) b.on3 = false;
-          }
-          state.outs += 2;
-        } else {
-          if (b.on1) b.on1 = false;
-          state.outs += 2;
-        }
-      } else {
-        state.outs += 1;
-      }
-      endIf3();
-      resetCount(state);                 // 打席結束
       break;
     }
 
@@ -486,9 +426,12 @@ export function applyEvent(state, ev) {
     // 其他雜項事件（不影響比賽狀態）
     case "OTHER": {
       // 預設不做任何事，不重置球數
-      // 但如果 JSON 有帶 runner_advances（例如牽制、跑壘異動），就照著執行
+      // 但如果 JSON 有帶 runner_advances（例如跑壘異動、投手犯規），就照著執行
       applyRunnerAdvancesLoose(state, advances);
 
+      // 延長賽突破僵局制度：直接放置跑者到指定壘包
+      // 特殊處理：當 from 和 to 相同時，表示要在該壘包直接放置跑者
+      // 例如 {from:"second", to:"second"} 代表在二壘直接放置跑者（延長賽用）
       const validFrom = new Set(["first","second","third"]);
       const validTo   = new Set(["second","third","home","out"]);
 
@@ -496,6 +439,7 @@ export function applyEvent(state, ev) {
       .filter(a => a && validFrom.has(a.from) && validTo.has(a.to));
 
       for (const a of list) {
+        // 延長賽突破僵局：當起點=終點時，直接在該壘包放置跑者
         if (a.from === a.to) {
           setBase(b, a.to);
         }
