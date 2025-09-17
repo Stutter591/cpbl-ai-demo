@@ -1,7 +1,12 @@
 import re, json, argparse, requests
+from typing import Optional, Tuple
 from bs4 import BeautifulSoup
 
-HEADERS = {"User-Agent": "Mozilla/5.0 (cpbl-one-minimal)"}
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    "Accept-Language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
+}
 
 # 備援：從整頁文字中解析「YYYY/MM/DD A隊 VS B隊」或「YYYY/MM/DD A隊 - B隊」
 PATTERNS = [
@@ -9,7 +14,7 @@ PATTERNS = [
     re.compile(r"(\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}).{0,80}?([\u4e00-\u9fa5A-Za-z0-9\-\u30007ELEVEn＆&．.\s]+?)\s*-\s*([\u4e00-\u9fa5A-Za-z0-9\-\u30007ELEVEn＆&．.\s]+)")
 ]
 
-def norm_date(s: str) -> str | None:
+def norm_date(s: str) -> Optional[str]:
     parts = re.split(r"[\/\-]", s.strip())
     if len(parts) != 3: return None
     y, m, d = (int(x) for x in parts)
@@ -21,7 +26,7 @@ def clean_team(s: str) -> str:
 
 VS_SPLIT = re.compile(r"\s+V[\.]?S[\.．]?\s+", re.IGNORECASE)
 
-def parse_breadcrumb(soup: BeautifulSoup):
+def parse_breadcrumb(soup: BeautifulSoup) -> Tuple[Optional[str], Optional[str], Optional[str]]:
     for a in soup.select('#Breadcrumbs li a'):
         text = a.get_text(" ", strip=True)
         if not text:
@@ -41,7 +46,7 @@ def parse_breadcrumb(soup: BeautifulSoup):
 
     return None, None, None
 
-def parse_text(text: str):
+def parse_text(text: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
     for rx in PATTERNS:
         m = rx.search(text)
         if m:
@@ -69,7 +74,7 @@ def fetch_game_meta(url: str) -> dict:
         date_iso, team_left, team_right = parse_text(soup.get_text(" ", strip=True))
 
     if not date_iso or not team_left or not team_right:
-        raise SystemExit("解析失敗：可能該場不存在或頁面版型變動。")
+        raise ValueError("解析失敗：可能該場不存在或頁面版型變動。")
 
     # 「left/right」僅代表標題左右順序，不代表主客
     return {
@@ -93,7 +98,10 @@ def main():
     else:
         ap.error("請提供 --url 或同時提供 --year --kind --sno")
 
-    out = fetch_game_meta(url)
+    try:
+        out = fetch_game_meta(url)
+    except ValueError as exc:
+        raise SystemExit(str(exc))
     print(json.dumps(out, ensure_ascii=False, indent=2))
 
 if __name__ == "__main__":

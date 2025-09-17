@@ -7,6 +7,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from cpbl_gamename import HEADERS, fetch_game_meta, build_url
+from time import sleep
 
 
 def build_schedule_url(year: int, month: int, kind: str) -> str:
@@ -17,33 +18,45 @@ def collect_game_keys(schedule_html: str, base_url: str, fallback_year: int, fal
     soup = BeautifulSoup(schedule_html, "lxml")
     keys = set()
 
-    for a in soup.select('a[href*="box/live"]'):
+    for a in soup.select('a[href*="/box/"]'):
         href = a.get('href')
         if not href:
             continue
         full = urljoin(base_url, href)
         parsed = urlparse(full)
         qs = parse_qs(parsed.query)
-        sno = qs.get('gameSno', [None])[0]
+        qs_lower = {k.lower(): v for k, v in qs.items()}
+
+        sno = qs_lower.get('gamesno', [None])[0]
         if not sno:
             continue
-        year = qs.get('year', [str(fallback_year)])[0]
-        kind = qs.get('KindCode', [fallback_kind])[0]
-        keys.add((int(year), kind, int(sno)))
+        try:
+            sno_int = int(sno)
+        except (TypeError, ValueError):
+            continue
+
+        year = qs_lower.get('year', [str(fallback_year)])[0]
+        kind = qs_lower.get('kindcode', [fallback_kind])[0]
+        keys.add((int(year), kind.upper(), sno_int))
 
     return sorted(keys)
 
 
 def fetch_month(year: int, month: int, kind: str):
     schedule_url = build_schedule_url(year, month, kind)
+    print(f"Fetching schedule: {schedule_url}")
     resp = requests.get(schedule_url, headers=HEADERS, timeout=20)
+    print(f"schedule status: {resp.status_code}")
     resp.raise_for_status()
 
     keys = collect_game_keys(resp.text, schedule_url, year, kind)
+    print(f"found {len(keys)} game links")
 
     games = []
     for y, k, sno in keys:
         url = build_url(y, k, sno)
+        print(f"  -> fetch game {y}-{k}-{sno}: {url}")
+        sleep(1.2)
         meta = fetch_game_meta(url)
         games.append({
             "year": y,
