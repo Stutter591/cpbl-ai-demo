@@ -1,0 +1,524 @@
+[
+  {
+    "date": "2025-09-02",
+    "KindCode": "A",
+    "GameSno": 301,
+    "teams": [
+      "富邦悍將",
+      "中信兄弟"
+    ]
+  },
+  {
+    "date": "2025-09-02",
+    "KindCode": "A",
+    "GameSno": 302,
+    "teams": [
+      "味全龍",
+      "樂天桃猿"
+    ]
+  },
+  {
+    "date": "2025-09-03",
+    "KindCode": "A",
+    "GameSno": 303,
+    "teams": [
+      "富邦悍將",
+      "中信兄弟"
+    ]
+  },
+  {
+    "date": "2025-09-03",
+    "KindCode": "A",
+    "GameSno": 304,
+    "teams": [
+      "味全龍",
+      "樂天桃猿"
+    ]
+  },
+  {
+    "date": "2025-09-03",
+    "KindCode": "A",
+    "GameSno": 305,
+    "teams": [
+      "台鋼雄鷹",
+      "統一7-ELEVEn獅"
+    ]
+  },
+  {
+    "date": "2025-09-04",
+    "KindCode": "A",
+    "GameSno": 306,
+    "teams": [
+      "台鋼雄鷹",
+      "統一7-ELEVEn獅"
+    ]
+  },
+  {
+    "date": "2025-09-05",
+    "KindCode": "A",
+    "GameSno": 307,
+    "teams": [
+      "統一7-ELEVEn獅",
+      "中信兄弟"
+    ]
+  },
+  {
+    "date": "2025-09-05",
+    "KindCode": "A",
+    "GameSno": 308,
+    "teams": [
+      "樂天桃猿",
+      "富邦悍將"
+    ]
+  },
+  {
+    "date": "2025-09-05",
+    "KindCode": "A",
+    "GameSno": 309,
+    "teams": [
+      "台鋼雄鷹",
+      "味全龍"
+    ]
+  },
+  {
+    "date": "2025-09-06",
+    "KindCode": "A",
+    "GameSno": 310,
+    "teams": [
+      "統一7-ELEVEn獅",
+      "中信兄弟"
+    ]
+  },
+  {
+    "date": "2025-09-06",
+    "KindCode": "A",
+    "GameSno": 311,
+    "teams": [
+      "樂天桃猿",
+      "富邦悍將"
+    ]
+  },
+  {
+    "date": "2025-09-06",
+    "KindCode": "A",
+    "GameSno": 312,
+    "teams": [
+      "台鋼雄鷹",
+      "味全龍"
+    ]
+  },
+  {
+    "date": "2025-09-07",
+    "KindCode": "A",
+    "GameSno": 313,
+    "teams": [
+      "台鋼雄鷹",
+      "味全龍"
+    ]
+  },
+  {
+    "date": "2025-09-09",
+    "KindCode": "A",
+    "GameSno": 316,
+    "teams": [
+      "中信兄弟",
+      "台鋼雄鷹"
+    ]
+  },
+  {
+    "date": "2025-09-09",
+    "KindCode": "A",
+    "GameSno": 317,
+    "teams": [
+      "樂天桃猿",
+      "統一7-ELEVEn獅"
+    ]
+  },
+  {
+    "date": "2025-09-10",
+    "KindCode": "A",
+    "GameSno": 318,
+    "teams": [
+      "中信兄弟",
+      "台鋼雄鷹"
+    ]
+  },
+  {
+    "date": "2025-09-10",
+    "KindCode": "A",
+    "GameSno": 319,
+    "teams": [
+      "樂天桃猿",
+      "統一7-ELEVEn獅"
+    ]
+  },
+  {
+    "date": "2025-09-10",
+    "KindCode": "A",
+    "GameSno": 320,
+    "teams": [
+      "富邦悍將",
+      "味全龍"
+    ]
+  },
+  {
+    "date": "2025-09-11",
+    "KindCode": "A",
+    "GameSno": 321,
+    "teams": [
+      "富邦悍將",
+      "味全龍"
+    ]
+  },
+  {
+    "date": "2025-09-12",
+    "KindCode": "A",
+    "GameSno": 322,
+    "teams": [
+      "富邦悍將",
+      "台鋼雄鷹"
+    ]
+  },
+  {
+    "date": "2025-09-12",
+    "KindCode": "A",
+    "GameSno": 323,
+    "teams": [
+      "味全龍",
+      "統一7-ELEVEn獅"
+    ]
+  },
+  {
+    "date": "2025-09-12",
+    "KindCode": "A",
+    "GameSno": 324,
+    "teams": [
+      "中信兄弟",
+      "樂天桃猿"
+    ]
+  },
+  {
+    "date": "2025-09-13",
+    "KindCode": "A",
+    "GameSno": 325,
+    "teams": [
+      "富邦悍將",
+      "台鋼雄鷹"
+    ]
+  },
+  {
+    "date": "2025-09-13",
+    "KindCode": "A",
+    "GameSno": 326,
+    "teams": [
+      "味全龍",
+      "統一7-ELEVEn獅"
+    ]
+  },
+  {
+    "date": "2025-09-13",
+    "KindCode": "A",
+    "GameSno": 327,
+    "teams": [
+      "中信兄弟",
+      "樂天桃猿"
+    ]
+  },
+  {
+    "date": "2025-09-14",
+    "KindCode": "A",
+    "GameSno": 328,
+    "teams": [
+      "中信兄弟",
+      "樂天桃猿"
+    ]
+  },
+  {
+    "date": "2025-09-14",
+    "KindCode": "A",
+    "GameSno": 329,
+    "teams": [
+      "富邦悍將",
+      "台鋼雄鷹"
+    ]
+  },
+  {
+    "date": "2025-09-14",
+    "KindCode": "A",
+    "GameSno": 330,
+    "teams": [
+      "味全龍",
+      "統一7-ELEVEn獅"
+    ]
+  },
+  {
+    "date": "2025-09-16",
+    "KindCode": "A",
+    "GameSno": 331,
+    "teams": [
+      "味全龍",
+      "樂天桃猿"
+    ]
+  },
+  {
+    "date": "2025-09-16",
+    "KindCode": "A",
+    "GameSno": 332,
+    "teams": [
+      "統一7-ELEVEn獅",
+      "富邦悍將"
+    ]
+  },
+  {
+    "date": "2025-09-16",
+    "KindCode": "A",
+    "GameSno": 333,
+    "teams": [
+      "中信兄弟",
+      "台鋼雄鷹"
+    ]
+  },
+  {
+    "date": "2025-09-18",
+    "KindCode": "A",
+    "GameSno": 334,
+    "teams": [
+      "台鋼雄鷹",
+      "味全龍"
+    ]
+  },
+  {
+    "date": "2025-09-18",
+    "KindCode": "A",
+    "GameSno": 335,
+    "teams": [
+      "富邦悍將",
+      "樂天桃猿"
+    ]
+  },
+  {
+    "date": "2025-09-18",
+    "KindCode": "A",
+    "GameSno": 336,
+    "teams": [
+      "統一7-ELEVEn獅",
+      "中信兄弟"
+    ]
+  },
+  {
+    "date": "2025-09-19",
+    "KindCode": "A",
+    "GameSno": 337,
+    "teams": [
+      "台鋼雄鷹",
+      "味全龍"
+    ]
+  },
+  {
+    "date": "2025-09-19",
+    "KindCode": "A",
+    "GameSno": 338,
+    "teams": [
+      "富邦悍將",
+      "樂天桃猿"
+    ]
+  },
+  {
+    "date": "2025-09-19",
+    "KindCode": "A",
+    "GameSno": 339,
+    "teams": [
+      "統一7-ELEVEn獅",
+      "中信兄弟"
+    ]
+  },
+  {
+    "date": "2025-09-20",
+    "KindCode": "A",
+    "GameSno": 340,
+    "teams": [
+      "樂天桃猿",
+      "統一7-ELEVEn獅"
+    ]
+  },
+  {
+    "date": "2025-09-20",
+    "KindCode": "A",
+    "GameSno": 341,
+    "teams": [
+      "台鋼雄鷹",
+      "富邦悍將"
+    ]
+  },
+  {
+    "date": "2025-09-20",
+    "KindCode": "A",
+    "GameSno": 342,
+    "teams": [
+      "味全龍",
+      "中信兄弟"
+    ]
+  },
+  {
+    "date": "2025-09-21",
+    "KindCode": "A",
+    "GameSno": 343,
+    "teams": [
+      "樂天桃猿",
+      "統一7-ELEVEn獅"
+    ]
+  },
+  {
+    "date": "2025-09-21",
+    "KindCode": "A",
+    "GameSno": 344,
+    "teams": [
+      "台鋼雄鷹",
+      "富邦悍將"
+    ]
+  },
+  {
+    "date": "2025-09-21",
+    "KindCode": "A",
+    "GameSno": 345,
+    "teams": [
+      "味全龍",
+      "中信兄弟"
+    ]
+  },
+  {
+    "date": "2025-09-23",
+    "KindCode": "A",
+    "GameSno": 346,
+    "teams": [
+      "樂天桃猿",
+      "味全龍"
+    ]
+  },
+  {
+    "date": "2025-09-23",
+    "KindCode": "A",
+    "GameSno": 347,
+    "teams": [
+      "富邦悍將",
+      "統一7-ELEVEn獅"
+    ]
+  },
+  {
+    "date": "2025-09-23",
+    "KindCode": "A",
+    "GameSno": 348,
+    "teams": [
+      "台鋼雄鷹",
+      "中信兄弟"
+    ]
+  },
+  {
+    "date": "2025-09-25",
+    "KindCode": "A",
+    "GameSno": 349,
+    "teams": [
+      "中信兄弟",
+      "富邦悍將"
+    ]
+  },
+  {
+    "date": "2025-09-25",
+    "KindCode": "A",
+    "GameSno": 350,
+    "teams": [
+      "味全龍",
+      "統一7-ELEVEn獅"
+    ]
+  },
+  {
+    "date": "2025-09-25",
+    "KindCode": "A",
+    "GameSno": 351,
+    "teams": [
+      "樂天桃猿",
+      "台鋼雄鷹"
+    ]
+  },
+  {
+    "date": "2025-09-26",
+    "KindCode": "A",
+    "GameSno": 352,
+    "teams": [
+      "中信兄弟",
+      "富邦悍將"
+    ]
+  },
+  {
+    "date": "2025-09-26",
+    "KindCode": "A",
+    "GameSno": 353,
+    "teams": [
+      "味全龍",
+      "統一7-ELEVEn獅"
+    ]
+  },
+  {
+    "date": "2025-09-26",
+    "KindCode": "A",
+    "GameSno": 354,
+    "teams": [
+      "樂天桃猿",
+      "台鋼雄鷹"
+    ]
+  },
+  {
+    "date": "2025-09-27",
+    "KindCode": "A",
+    "GameSno": 355,
+    "teams": [
+      "統一7-ELEVEn獅",
+      "台鋼雄鷹"
+    ]
+  },
+  {
+    "date": "2025-09-27",
+    "KindCode": "A",
+    "GameSno": 356,
+    "teams": [
+      "中信兄弟",
+      "樂天桃猿"
+    ]
+  },
+  {
+    "date": "2025-09-27",
+    "KindCode": "A",
+    "GameSno": 357,
+    "teams": [
+      "富邦悍將",
+      "味全龍"
+    ]
+  },
+  {
+    "date": "2025-09-28",
+    "KindCode": "A",
+    "GameSno": 358,
+    "teams": [
+      "統一7-ELEVEn獅",
+      "台鋼雄鷹"
+    ]
+  },
+  {
+    "date": "2025-09-28",
+    "KindCode": "A",
+    "GameSno": 359,
+    "teams": [
+      "中信兄弟",
+      "樂天桃猿"
+    ]
+  },
+  {
+    "date": "2025-09-28",
+    "KindCode": "A",
+    "GameSno": 360,
+    "teams": [
+      "富邦悍將",
+      "味全龍"
+    ]
+  }
+]

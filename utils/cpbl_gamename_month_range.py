@@ -38,8 +38,8 @@ def collect_month(year: int, month: int, kind: str,
                 "teams": meta["teams"]
             })
             print(f"✔ {date_str} #{sno}: {meta['teams'][0]} vs {meta['teams'][1]}")
-        elif date_str > f"{target_prefix}-31":
-            break
+        else:
+            print(f"[skip] sno={sno}: date {date_str} not in {target_prefix}")
 
         time.sleep(delay)
 
@@ -59,6 +59,7 @@ def main():
 
     games = collect_month(args.year, args.month, args.kind,
                           args.start_sno, args.end_sno, args.delay)
+    games.sort(key=lambda g: (g["date"], g["GameSno"]))
 
     if args.output:
         args.output.write_text(json.dumps(games, ensure_ascii=False, indent=2),
