@@ -17,6 +17,38 @@ function clearError(){
   if (box) box.textContent = '';
 }
 
+let teamLabels = { away: '客隊', home: '主隊' };
+
+async function loadTeamLabels(){
+  try{
+    const res = await fetch('./utils/games-2025-09.json', { cache: 'no-store' });
+    if(!res.ok) return;
+    const list = await res.json();
+    if(!Array.isArray(list) || list.length===0) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const targetSno = params.get('gameSno');
+    const targetDate = params.get('date');
+
+    let match = null;
+    if (targetSno) {
+      match = list.find(item => String(item.GameSno) === String(targetSno));
+    }
+    if (!match && targetDate) {
+      match = list.find(item => item.date === targetDate);
+    }
+    if (!match) {
+      match = list[0];
+    }
+
+    if (match && Array.isArray(match.teams) && match.teams.length >= 2) {
+      teamLabels = { away: match.teams[0], home: match.teams[1] };
+    }
+  }catch(err){
+    console.warn('無法載入隊伍資訊：', err);
+  }
+}
+
 async function loadEventsWithMeta(){
   const url='./events.json';
   const res=await fetch(url,{cache:'no-store'});
@@ -37,7 +69,9 @@ function renderScoreboard(linescore){
   // 計算總分時忽略 "X"，只計算數字
   const sum=a=>(a||[]).reduce((x,y)=>x+(typeof y === 'number' ? y : 0),0);
   const row=(team,arr=[])=>`<tr><td>${team}</td>`+[...Array(maxInning)].map((_,i)=>`<td>${arr[i]??""}</td>`).join("")+`<td>${sum(arr)}</td></tr>`;
-  html+=row("Away",linescore.away||[]); html+=row("Home",linescore.home||[]); html+="</table>";
+  html+=row(teamLabels.away || '客隊',linescore.away||[]);
+  html+=row(teamLabels.home || '主隊',linescore.home||[]);
+  html+="</table>";
   document.getElementById("scoreboard").innerHTML=html;
 }
 
@@ -74,7 +108,8 @@ function ensureCountDots(){
 
 function renderStatus(state){
   const half = state.half === 'TOP' ? '上' : '下';
-  const batting = state.batting === 'away' ? 'Away' : 'Home';
+  const batting = state.batting === 'away' ? (teamLabels.away || '客隊')
+                                           : (teamLabels.home || '主隊');
   const pillInning = document.getElementById("pillInning");
   const pillBat = document.getElementById("pillBat");
   if (pillInning) pillInning.textContent = `${state.inning}${half}`;
@@ -287,6 +322,7 @@ function next(){ pause(); if(current<frames.length-1) showStep(current+1); }
 async function main(){
   try{
     clearError();  // 呼叫報錯警告
+    await loadTeamLabels();
     ensureOutDots(); ensureCountDots();
     const events=await loadEventsWithMeta();
 
