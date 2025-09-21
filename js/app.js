@@ -149,6 +149,8 @@ async function loadEventsWithMeta(){
 let livePollHandle = null;
 let currentGameId = null;
 const POLL_INTERVAL_MS = 5000; // 5 秒輪詢一次
+// track which game_ids we've already asked the backend to track to avoid duplicates
+const notifiedTrackingGames = new Set();
 
 async function fetchGameEvents(gameId) {
   try {
@@ -275,11 +277,48 @@ async function startLivePolling(gameId) {
   }, POLL_INTERVAL_MS);
 }
 
+// Ask backend to start tracking this game (fire-and-forget). Shows lightweight feedback.
+async function requestTrackGame(gameId, intervalSeconds = 30) {
+  // avoid repeated notifications for the same game
+  if (notifiedTrackingGames.has(gameId)) {
+    console.log('已通知後端追蹤（已存在）：', gameId);
+    return true;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/api/track_game`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game_id: gameId, interval_seconds: intervalSeconds })
+    });
+    if (res.ok) {
+      const data = await res.json().catch(() => null);
+      console.log('已請後端開始追蹤：', gameId, data);
+      setVersionText((v)=>`已通知後端追蹤 ${gameId}`);
+      // mark notified only on success
+      notifiedTrackingGames.add(gameId);
+      return true;
+    } else {
+      console.warn('後端回應錯誤，無法排程追蹤：', res.status, res.statusText);
+      showError(`後端無法啟動追蹤：${res.status}`);
+      return false;
+    }
+  } catch (err) {
+    console.warn('呼叫後端啟動追蹤失敗：', err);
+    showError('無法連線到後端以啟動追蹤');
+    return false;
+  }
+}
+
 function stopLivePolling() {
   if (livePollHandle) {
     clearInterval(livePollHandle);
     livePollHandle = null;
     console.log('⏹️ 已停止即時事件監控');
+    // allow re-notifying backend for this game in the future
+    if (currentGameId && notifiedTrackingGames.has(currentGameId)) {
+      notifiedTrackingGames.delete(currentGameId);
+      console.log('清除已通知追蹤的記錄，允許未來重新通知：', currentGameId);
+    }
   }
 }
 
@@ -599,6 +638,8 @@ async function main(){
           if (mode === 'live') {
             console.log(`🔴 切換到即時比賽監控：${gameId}`);
             await startLivePolling(gameId);
+            // Notify backend to start tracking this live game (non-blocking)
+            requestTrackGame(gameId).catch(()=>{});
           } else if (mode === 'history') {
             console.log(`📁 切換到歷史比賽：${gameId}`);
             await loadHistoricalGame(gameId);
@@ -619,6 +660,8 @@ async function main(){
       if (mode === 'live') {
         // 啟動即時監控
         await startLivePolling(gameId);
+        // notify backend as well when started from URL
+        requestTrackGame(gameId).catch(()=>{});
       } else {
         // 載入歷史比賽
         await loadHistoricalGame(gameId);
