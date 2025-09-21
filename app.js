@@ -1,5 +1,8 @@
-// app.js — 包事件清單（無 timeline 命名衝突），每列含流水號 + event 中文
-import { initialState, applyEvent } from './rules.js';
+// app.js — 棒球事件播放器
+import { initialState, applyEvent } from './js/rules.js';
+
+// 可由外部覆寫的 API 根網址（開發時預設指向本機，部署時可注入 window.APP_CONFIG.apiBase）
+const API_BASE = window.APP_CONFIG?.apiBase || window.__API_BASE__ || (location.hostname === '127.0.0.1' || location.hostname === 'localhost' ? 'http://127.0.0.1:7000' : `${location.protocol}//${location.host}`);
 
 const tz = 'Asia/Taipei';
 const fmt = new Intl.DateTimeFormat('zh-TW', { timeZone: tz, dateStyle: 'medium', timeStyle: 'short' });
@@ -21,7 +24,7 @@ let teamLabels = { away: '客隊', home: '主隊' };
 
 async function loadTeamLabels(){
   try{
-    const res = await fetch('./utils/games-2025-09.json', { cache: 'no-store' });
+    const res = await fetch(`${API_BASE}/data/schedule/games-2025-09.json`, {cache: 'no-store'});
     if(!res.ok) return;
     const list = await res.json();
     if(!Array.isArray(list) || list.length===0) return;
@@ -49,16 +52,230 @@ async function loadTeamLabels(){
   }
 }
 
+async function loadGameOptions(){
+  try{
+    // 載入比賽排程檔案
+    const response = await fetch(`${API_BASE}/data/schedule/games-2025-09.json`, {cache: 'no-store'});
+    if(!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const games = await response.json();
+    const gameSelect = document.getElementById('gameSelect');
+    
+    if(gameSelect && Array.isArray(games)) {
+      // 清空現有選項
+      gameSelect.innerHTML = '';
+      
+      // 添加預設選項
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = '預設檔案 (events.json)';
+      gameSelect.appendChild(defaultOption);
+      
+      // 處理比賽資料並創建選項
+      games.forEach(game => {
+        if(game.GameSno && game.KindCode && game.teams && Array.isArray(game.teams) && game.teams.length >= 2) {
+          // 由 date 取得年份，組合成 Year-KindCode-GameSno 格式 (例如: 2025-A-313)
+          const year = new Date(game.date).getFullYear();
+          const gameId = `${year}-${game.KindCode}-${game.GameSno}`;
+          const teamsText = game.teams.join(' vs ');
+          
+          // 根據時間判斷比賽狀態：昨天以前（已結束）、今天（即時）、未來（尚未開始）
+          const gameDate = new Date(game.date);
+          const today = new Date();
+          const yesterday = new Date(today);
+          yesterday.setDate(today.getDate() - 1);
+          
+          let mode, icon, label;
+          if (gameDate.toDateString() === today.toDateString()) {
+            // 今天的比賽 = 即時
+            mode = 'live';
+            icon = '🔴';
+            label = '即時';
+          } else if (gameDate <= yesterday) {
+            // 昨天以前的比賽 = 已結束
+            mode = 'history';
+            icon = '📁';
+            label = '已結束';
+          } else {
+            // 未來的比賽 = 尚未開始
+            mode = 'future';
+            icon = '⏰';
+            label = '尚未開始';
+          }
+          
+          const option = document.createElement('option');
+          option.value = `${mode}:${gameId}`;
+          option.textContent = `${icon} ${label}：${game.date} ${teamsText} (${gameId})`;
+          gameSelect.appendChild(option);
+          console.log('option:', option.value, option.textContent);
+        }
+      });
+      
+      console.log(`✅ 從 games-2025-09.json 載入了 ${games.length} 場比賽，生成了 ${games.length * 2} 個選項`);
+    }
+  }catch(err){
+    console.warn('無法載入比賽選項：', err);
+    // 如果載入失敗，顯示錯誤訊息
+    const gameSelect = document.getElementById('gameSelect');
+    if(gameSelect) {
+      gameSelect.innerHTML = '<option value="">載入失敗</option>';
+    }
+  }
+}
+
 async function loadEventsWithMeta(){
-  const url='./events.json';
-  const res=await fetch(url,{cache:'no-store'});
-  if(!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-  const text=await res.text();
-  let json; try{ json=JSON.parse(text);}catch(e){ throw new Error(`events.json 非合法 JSON：${e.message}`);}
-  const lm=res.headers.get('Last-Modified');
-  if(lm){ setVersionText(`資料版本：${fmt.format(new Date(lm))}`); }
-  else { setVersionText(`資料版本：內容雜湊 ${await sha256Short(text)}`); }
+  const res = await fetch(`${API_BASE}/data/games/events.json`, {cache: 'no-store'});
+  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+  const text = await res.text();
+  let json; 
+  try { 
+    json = JSON.parse(text);
+  } catch(e) { 
+    throw new Error(`events.json 非合法 JSON：${e.message}`);
+  }
+  
+  const lm = res.headers.get('Last-Modified');
+  if (lm) { 
+    setVersionText(`資料版本：${fmt.format(new Date(lm))}`); 
+  } else { 
+    setVersionText(`資料版本：內容雜湊 ${await sha256Short(text)}`); 
+  }
   return json;
+}
+
+// 即時事件 polling 功能
+let livePollHandle = null;
+let currentGameId = null;
+const POLL_INTERVAL_MS = 5000; // 5 秒輪詢一次
+
+async function fetchGameEvents(gameId) {
+  try {
+    const response = await fetch(`${API_BASE}/get-game-events/${gameId}`, {cache: 'no-store'});
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.warn(`載入比賽 ${gameId} 事件失敗:`, error);
+    return null;
+  }
+}
+
+function loadEventsIntoPlayer(events) {
+  if (!events || !Array.isArray(events) || events.length === 0) {
+    console.log('沒有事件資料可載入');
+    return;
+  }
+
+  const state = initialState();
+  frames = []; 
+  snapshotPerStep = []; 
+  current = -1;
+
+  let prevRuns = 0;
+  let lastKey = `${state.batting}:${state.inning}`;
+
+  for (const ev of events) {
+    const { before, after } = applyEvent(state, ev);
+
+    const key = `${state.batting}:${state.inning}`;
+    if (key !== lastKey) { 
+      prevRuns = 0; 
+      lastKey = key; 
+    }
+
+    const arr = state.linescore[state.batting] || [];
+    const cur = arr[state.inning - 1] ?? 0;
+
+    frames.push({
+      // 支援新舊兩種格式，新格式只有 event/code/runner_advances
+      ts: ev.ts || new Date().toISOString(),
+      event: { 
+        code: ev.code, 
+        event: ev.event || `Event ${ev.code}`, 
+        meta: ev.meta || {} 
+      },
+      before,
+      after,
+      runs: cur - prevRuns
+    });
+    prevRuns = cur;
+
+    snapshotPerStep.push(takeSnapshot(state));
+  }
+
+  // 重新渲染所有元件
+  renderScoreboard({away: [], home: []});
+  renderBases({on1: false, on2: false, on3: false});
+  renderStatus({inning: 1, half: "TOP", outs: 0, batting: "away", count: {balls: 0, strikes: 0}});
+  renderNow(frames, -1);
+  renderEventList(frames, -1);
+  renderEventSelect(frames, -1);
+
+  // 顯示最新狀態
+  if (frames.length > 0) {
+    current = frames.length - 1;
+    showStep(current);
+  }
+
+  console.log(`✅ 載入了 ${frames.length} 個事件到播放器`);
+}
+
+async function startLivePolling(gameId) {
+  stopLivePolling();
+  currentGameId = gameId;
+  
+  console.log(`🔴 開始監控比賽 ${gameId} 的即時事件`);
+  
+  // 立即載入一次
+  const gameData = await fetchGameEvents(gameId);
+  if (gameData) {
+    setVersionText(`資料版本：${gameData.status === 'live' ? '即時比賽' : gameData.status === 'finished' ? '已結束' : '尚未開始'} - ${gameData.game_id} (${gameData.events_count} 筆事件)`);
+    loadEventsIntoPlayer(gameData.events);
+    
+    if (gameData.status === 'finished') {
+      console.log(`✅ 比賽 ${gameId} 已結束，停止監控`);
+      return;
+    }
+  }
+  
+  // 設定定期輪詢
+  livePollHandle = setInterval(async () => {
+    const gameData = await fetchGameEvents(gameId);
+    if (gameData) {
+      setVersionText(`資料版本：${gameData.status === 'live' ? '即時比賽' : gameData.status === 'finished' ? '已結束' : '尚未開始'} - ${gameData.game_id} (${gameData.events_count} 筆事件)`);
+      loadEventsIntoPlayer(gameData.events);
+      
+      if (gameData.status === 'finished') {
+        console.log(`✅ 比賽 ${gameId} 已結束，停止監控`);
+        stopLivePolling();
+      }
+    }
+  }, POLL_INTERVAL_MS);
+}
+
+function stopLivePolling() {
+  if (livePollHandle) {
+    clearInterval(livePollHandle);
+    livePollHandle = null;
+    console.log('⏹️ 已停止即時事件監控');
+  }
+}
+
+async function loadHistoricalGame(gameId) {
+  stopLivePolling();
+  console.log(`📁 載入歷史比賽 ${gameId}`);
+  
+  const gameData = await fetchGameEvents(gameId);
+  if (gameData) {
+    setVersionText(`資料版本：歷史比賽 - ${gameData.game_id} (${gameData.events_count} 筆事件)`);
+    loadEventsIntoPlayer(gameData.events);
+  } else {
+    setVersionText('資料版本：載入失敗');
+    showError(`找不到比賽 ${gameId} 的資料`);
+  }
 }
 
 function renderScoreboard(linescore){
@@ -323,54 +540,71 @@ async function main(){
   try{
     clearError();  // 呼叫報錯警告
     await loadTeamLabels();
-    ensureOutDots(); ensureCountDots();
-    const events=await loadEventsWithMeta();
-
-    const state=initialState();
-    frames=[]; snapshotPerStep=[]; current=-1;
-
-    let prevRuns=0;
-    let lastKey = `${state.batting}:${state.inning}`;
-
-    for(const ev of events){
-      const { before, after } = applyEvent(state, ev);
-
-      const key = `${state.batting}:${state.inning}`;
-      if (key !== lastKey) { prevRuns = 0; lastKey = key; }
-
-      const arr=state.linescore[state.batting]||[];
-      const cur=arr[state.inning-1] ?? 0;
-
-      frames.push({
-        ts: ev.ts,
-        event: { code: ev.code, event: ev.event, meta: ev.meta },
-        before,
-        after,
-        runs: cur - prevRuns
-      });
-      prevRuns=cur;
-
-      snapshotPerStep.push( takeSnapshot(state) );
-    }
-
-    // 初始畫面
-    renderScoreboard({away:[],home:[]});
-    renderBases({on1:false,on2:false,on3:false});
-    renderStatus({inning:1,half:"TOP",outs:0,batting:"away",count:{balls:0,strikes:0}});
-    renderNow(frames, -1);
-    renderEventList(frames, -1);
-    renderEventSelect(frames, -1);
-
+    await loadGameOptions();  // 動態載入比賽選項
+    ensureOutDots(); 
+    ensureCountDots();
+    
+    // 檢查 URL 參數決定載入模式
+    const params = new URLSearchParams(window.location.search);
+    const gameId = params.get('game');
+    const mode = params.get('mode'); // 'live' | 'history'
     
     // 控制綁定
-    document.getElementById('btnPlay').onclick=()=> (timer? pause(): play());
-    document.getElementById('btnPrev').onclick=prev;
-    document.getElementById('btnNext').onclick=next;
-  }catch(e){
+    document.getElementById('btnPlay').onclick = () => (timer ? pause() : play());
+    document.getElementById('btnPrev').onclick = prev;
+    document.getElementById('btnNext').onclick = next;
+    
+    // 比賽選擇器事件處理
+    const gameSelect = document.getElementById('gameSelect');
+    if (gameSelect) {
+      gameSelect.onchange = async (event) => {
+        const selectedValue = event.target.value;
+        
+        if (!selectedValue) {
+          // 載入預設檔案
+          console.log('📁 載入預設 events.json 檔案');
+          stopLivePolling();
+          const events = await loadEventsWithMeta();
+          loadEventsIntoPlayer(events);
+          return;
+        }
+        
+        const [mode, gameId] = selectedValue.split(':');
+        
+        if (mode === 'live') {
+          console.log(`🔴 切換到即時比賽監控：${gameId}`);
+          await startLivePolling(gameId);
+        } else if (mode === 'history') {
+          console.log(`📁 切換到歷史比賽：${gameId}`);
+          await loadHistoricalGame(gameId);
+        } else if (mode === 'future') {
+          console.log(`⏰ 尚未開始的比賽：${gameId}`);
+          setVersionText('比賽尚未開始');
+          loadEventsIntoPlayer([]); // 載入空事件列表
+        }
+      };
+    }
+    
+    if (gameId) {
+      if (mode === 'live') {
+        // 啟動即時監控
+        await startLivePolling(gameId);
+      } else {
+        // 載入歷史比賽
+        await loadHistoricalGame(gameId);
+      }
+    } else {
+      // 預設載入 events.json
+      console.log('📁 載入預設 events.json 檔案');
+      const events = await loadEventsWithMeta();
+      loadEventsIntoPlayer(events);
+    }
+    
+  } catch(e) {
     setVersionText('資料版本：讀取失敗');
     const el = document.getElementById('nowEvent');
-    if (el) el.textContent=`❌ 載入或解析 events.json 失敗：${e.message}`;
-    showError(`載入或解析 events.json 失敗：${e.message}`); //報錯Json格式錯誤
+    if (el) el.textContent = `❌ 載入失敗：${e.message}`;
+    showError(`載入失敗：${e.message}`);
     console.error(e);
   }
 }

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>⚾ 智慧本壘板</title>
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./css/styles.css" />
 </head>
 <body>
   <header>
@@ -36,6 +36,12 @@
             <select id="eventSelect" size="1"></select>
           </span>
         </label>
+        <!-- 比賽選擇器 -->
+        <label>比賽場次
+          <select id="gameSelect">
+            <option value="">載入中...</option>
+          </select>
+        </label>
         <span id="evtCounter" style="margin-left:auto;opacity:.75">事件：0 / 0</span>
       </div>
       
@@ -51,7 +57,6 @@
       <h2>場上狀態</h2>
 
       <div class="state-wrap">
-        <div class="state-wrap">
       <!-- ① 壘包圖容器：app.js 會把 SVG 寫進這個 #bases -->
       <div id="bases">
         <!-- 可留空，或放預設 SVG；app.js 會在執行時覆蓋 -->
