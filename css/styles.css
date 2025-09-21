@@ -59,10 +59,6 @@ main{
 
 /* ===== 場上狀態布局：上(壘包) + 下(資訊區) 不溢出 ===== */
 .state-wrap{display:flex;flex-direction:column;gap:18px;align-items:center;   /* 讓上方壘包置中 */}
-@media (max-width: 1200px){
-  .state-wrap{ grid-template-columns: 1fr 260px; }}
-@media (max-width: 900px){
-  .state-wrap{ grid-template-columns: 1fr; } /* 手機改上下 */}
 
 /* 下方資訊區 */
 .side{width:100%;display:flex;flex-direction:column;gap:12px;min-width:0;}
@@ -132,6 +128,12 @@ main{
 }
 
 /* RWD：窄螢幕調整 */
+@media (max-width: 1200px){
+  main { grid-template-columns: 1fr 380px; } /* 縮小右欄寬度 */
+}
+@media (max-width: 900px){
+  main { grid-template-columns: 1fr; } /* 手機改為單欄上下堆疊 */
+}
 @media (max-width: 768px){
   .count-lights{ grid-template-columns: 1fr; }
   #diamond{ width:240px; height:240px; }
