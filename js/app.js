@@ -164,15 +164,29 @@ async function fetchGameEvents(gameId) {
 }
 
 function loadEventsIntoPlayer(events) {
+  // 先停止播放和清除狀態
+  pause();
+  frames = []; 
+  snapshotPerStep = []; 
+  current = -1;
+  clearError();
+
+  // 如果沒有事件資料，顯示空白狀態
   if (!events || !Array.isArray(events) || events.length === 0) {
-    console.log('沒有事件資料可載入');
+    console.log('沒有事件資料，清除畫面');
+    const emptyState = initialState();
+    
+    // 清除畫面，顯示初始狀態
+    renderScoreboard({away: [], home: []});
+    renderBases({on1: false, on2: false, on3: false});
+    renderStatus({inning: 1, half: "TOP", outs: 0, batting: "away", count: {balls: 0, strikes: 0}});
+    renderNow([], -1);
+    renderEventList([], -1);
+    renderEventSelect([], -1);
     return;
   }
 
   const state = initialState();
-  frames = []; 
-  snapshotPerStep = []; 
-  current = -1;
 
   let prevRuns = 0;
   let lastKey = `${state.batting}:${state.inning}`;
@@ -233,12 +247,17 @@ async function startLivePolling(gameId) {
   const gameData = await fetchGameEvents(gameId);
   if (gameData) {
     setVersionText(`資料版本：${gameData.status === 'live' ? '即時比賽' : gameData.status === 'finished' ? '已結束' : '尚未開始'} - ${gameData.game_id} (${gameData.events_count} 筆事件)`);
-    loadEventsIntoPlayer(gameData.events);
+    loadEventsIntoPlayer(gameData.events || []);
     
     if (gameData.status === 'finished') {
       console.log(`✅ 比賽 ${gameId} 已結束，停止監控`);
       return;
     }
+  } else {
+    setVersionText(`比賽 ${gameId} 載入失敗`);
+    showError(`無法載入比賽 ${gameId} 的資料`);
+    loadEventsIntoPlayer([]); // 清除畫面
+    return;
   }
   
   // 設定定期輪詢
@@ -246,7 +265,7 @@ async function startLivePolling(gameId) {
     const gameData = await fetchGameEvents(gameId);
     if (gameData) {
       setVersionText(`資料版本：${gameData.status === 'live' ? '即時比賽' : gameData.status === 'finished' ? '已結束' : '尚未開始'} - ${gameData.game_id} (${gameData.events_count} 筆事件)`);
-      loadEventsIntoPlayer(gameData.events);
+      loadEventsIntoPlayer(gameData.events || []);
       
       if (gameData.status === 'finished') {
         console.log(`✅ 比賽 ${gameId} 已結束，停止監控`);
@@ -269,12 +288,13 @@ async function loadHistoricalGame(gameId) {
   console.log(`📁 載入歷史比賽 ${gameId}`);
   
   const gameData = await fetchGameEvents(gameId);
-  if (gameData) {
+  if (gameData && gameData.events) {
     setVersionText(`資料版本：歷史比賽 - ${gameData.game_id} (${gameData.events_count} 筆事件)`);
     loadEventsIntoPlayer(gameData.events);
   } else {
-    setVersionText('資料版本：載入失敗');
+    setVersionText(`比賽 ${gameId} 無資料`);
     showError(`找不到比賽 ${gameId} 的資料`);
+    loadEventsIntoPlayer([]); // 清除畫面
   }
 }
 
@@ -560,27 +580,37 @@ async function main(){
       gameSelect.onchange = async (event) => {
         const selectedValue = event.target.value;
         
-        if (!selectedValue) {
-          // 載入預設檔案
-          console.log('📁 載入預設 events.json 檔案');
-          stopLivePolling();
-          const events = await loadEventsWithMeta();
-          loadEventsIntoPlayer(events);
-          return;
-        }
-        
-        const [mode, gameId] = selectedValue.split(':');
-        
-        if (mode === 'live') {
-          console.log(`🔴 切換到即時比賽監控：${gameId}`);
-          await startLivePolling(gameId);
-        } else if (mode === 'history') {
-          console.log(`📁 切換到歷史比賽：${gameId}`);
-          await loadHistoricalGame(gameId);
-        } else if (mode === 'future') {
-          console.log(`⏰ 尚未開始的比賽：${gameId}`);
-          setVersionText('比賽尚未開始');
-          loadEventsIntoPlayer([]); // 載入空事件列表
+        try {
+          clearError();
+          
+          if (!selectedValue) {
+            // 載入預設檔案
+            console.log('📁 載入預設 events.json 檔案');
+            setVersionText('載入中...');
+            stopLivePolling();
+            const events = await loadEventsWithMeta();
+            loadEventsIntoPlayer(events.events || events);
+            return;
+          }
+          
+          const [mode, gameId] = selectedValue.split(':');
+          setVersionText(`載入 ${gameId} 中...`);
+          
+          if (mode === 'live') {
+            console.log(`🔴 切換到即時比賽監控：${gameId}`);
+            await startLivePolling(gameId);
+          } else if (mode === 'history') {
+            console.log(`📁 切換到歷史比賽：${gameId}`);
+            await loadHistoricalGame(gameId);
+          } else if (mode === 'future') {
+            console.log(`⏰ 尚未開始的比賽：${gameId}`);
+            setVersionText(`比賽 ${gameId} 尚未開始`);
+            loadEventsIntoPlayer([]); // 載入空事件列表
+          }
+        } catch (error) {
+          console.error('切換比賽時發生錯誤：', error);
+          showError(`切換比賽失敗：${error.message}`);
+          setVersionText('載入失敗');
         }
       };
     }
