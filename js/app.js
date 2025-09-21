@@ -1,5 +1,5 @@
 // app.js — 棒球事件播放器
-import { initialState, applyEvent } from './js/rules.js';
+import { initialState, applyEvent } from './rules.js';
 
 // 可由外部覆寫的 API 根網址（開發時預設指向本機，部署時可注入 window.APP_CONFIG.apiBase）
 const API_BASE = window.APP_CONFIG?.apiBase || window.__API_BASE__ || (location.hostname === '127.0.0.1' || location.hostname === 'localhost' ? 'http://127.0.0.1:7000' : `${location.protocol}//${location.host}`);
