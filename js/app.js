@@ -21,6 +21,8 @@ function clearError(){
 }
 
 let teamLabels = { away: '客隊', home: '主隊' };
+// cache loaded games so we can look up teams when user switches selection
+let gamesCache = [];
 
 async function loadTeamLabels(){
   try{
@@ -73,7 +75,9 @@ async function loadGameOptions(){
       defaultOption.textContent = '預設檔案 (events.json)';
       gameSelect.appendChild(defaultOption);
       
-      // 處理比賽資料並創建選項
+  // cache games for later lookup and 處理比賽資料並創建選項
+  gamesCache = games;
+      
       games.forEach(game => {
         if(game.GameSno && game.KindCode && game.teams && Array.isArray(game.teams) && game.teams.length >= 2) {
           // 由 date 取得年份，組合成 Year-KindCode-GameSno 格式 (例如: 2025-A-313)
@@ -112,6 +116,12 @@ async function loadGameOptions(){
           const option = document.createElement('option');
           option.value = `${mode}:${gameId}`;
           option.textContent = `${icon} ${label}：${game.date} ${teamsText} (${gameId})`;
+          // attach team info so we can update the displayed team names when switching games
+          option.dataset.away = String(game.teams[0] || '客隊');
+          option.dataset.home = String(game.teams[1] || '主隊');
+          option.dataset.gameSno = String(game.GameSno || '');
+          option.dataset.date = String(game.date || '');
+          option.dataset.kind = String(game.KindCode || '');
           gameSelect.appendChild(option);
           console.log('option:', option.value, option.textContent);
         }
@@ -622,23 +632,55 @@ async function main(){
     if (gameSelect) {
       gameSelect.onchange = async (event) => {
         const selectedValue = event.target.value;
-        
+        const selectedOption = event.target.options ? event.target.options[event.target.selectedIndex] : null;
+
         try {
           clearError();
-          
+
           if (!selectedValue) {
             // 載入預設檔案
             console.log('📁 載入預設 events.json 檔案');
             setVersionText('載入中...');
             stopLivePolling();
+            // reset to generic labels
+            teamLabels = { away: '客隊', home: '主隊' };
             const events = await loadEventsWithMeta();
             loadEventsIntoPlayer(events.events || events);
+            // re-render with cleared labels
+            renderScoreboard({away: [], home: []});
+            renderStatus({inning: 1, half: "TOP", outs: 0, batting: "away", count: {balls: 0, strikes: 0}});
             return;
           }
-          
+
+          // update team labels from the selected option's dataset (if present)
+          if (selectedOption && selectedOption.dataset && (selectedOption.dataset.away || selectedOption.dataset.home)) {
+            teamLabels = {
+              away: selectedOption.dataset.away || '客隊',
+              home: selectedOption.dataset.home || '主隊'
+            };
+            // re-render current snapshot/scoreboard/status so team names update immediately
+            const snap = snapshotPerStep[current];
+            renderScoreboard(snap?.linescore || {away: [], home: []});
+            renderStatus(snap || {inning: 1, half: "TOP", outs: 0, batting: "away", count: {balls: 0, strikes: 0}});
+          } else if (gamesCache.length > 0) {
+            // fallback: try to find matching game record in cache by GameSno or date
+            const [, selectedGameId] = selectedValue.split(':');
+            const found = gamesCache.find(g => {
+              const year = new Date(g.date).getFullYear();
+              const gid = `${year}_${g.KindCode}_${g.GameSno}`;
+              return gid === selectedGameId || String(g.GameSno) === selectedGameId;
+            });
+            if (found && Array.isArray(found.teams) && found.teams.length >= 2) {
+              teamLabels = { away: found.teams[0], home: found.teams[1] };
+              const snap = snapshotPerStep[current];
+              renderScoreboard(snap?.linescore || {away: [], home: []});
+              renderStatus(snap || {inning: 1, half: "TOP", outs: 0, batting: "away", count: {balls: 0, strikes: 0}});
+            }
+          }
+
           const [mode, gameId] = selectedValue.split(':');
           setVersionText(`載入 ${gameId} 中...`);
-          
+
           if (mode === 'live') {
             console.log(`🔴 切換到即時比賽監控：${gameId}`);
             await startLivePolling(gameId);
