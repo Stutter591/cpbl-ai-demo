@@ -452,6 +452,12 @@ export function applyEvent(state, ev) {
 
     // 比賽結束
     case "END": {
+      // 如果目前不是下半局，表示前一個事件已經把狀態換到下一半局（例如進到十局上）
+      // 不要再補當前半局的格子，以免多出一個上半局的 0
+      if (state.half !== "BOTTOM") {
+        resetCount(state);
+        break;
+      }
       // 比賽在半局中途結束：下半局主隊不用進攻時標記 "X"，其他情況補 0
       const shouldMarkX = state.half === "BOTTOM" && state.batting === "home";
       ensureInningSlot(state, shouldMarkX);

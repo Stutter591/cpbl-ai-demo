@@ -78,28 +78,32 @@ async function loadGameOptions(){
         if(game.GameSno && game.KindCode && game.teams && Array.isArray(game.teams) && game.teams.length >= 2) {
           // 由 date 取得年份，組合成 Year-KindCode-GameSno 格式 (例如: 2025-A-313)
           const year = new Date(game.date).getFullYear();
-          const gameId = `${year}-${game.KindCode}-${game.GameSno}`;
+          const gameId = `${year}_${game.KindCode}_${game.GameSno}`;
           const teamsText = game.teams.join(' vs ');
           
           // 根據時間判斷比賽狀態：昨天以前（已結束）、今天（即時）、未來（尚未開始）
-          const gameDate = new Date(game.date);
-          const today = new Date();
+          // 取得台灣時區的年月日（只取年月日，不取時間）
+          const tz = 'Asia/Taipei';
+          // 產生台灣時區的日期物件
+          function getTaipeiDate(dateStr) {
+            // dateStr 格式假設為 "YYYY-MM-DD"
+            return new Date(new Date(dateStr).toLocaleString('en-US', { timeZone: tz }));
+          }
+          const gameDate = getTaipeiDate(game.date);
+          const today = getTaipeiDate(new Date().toISOString().slice(0,10));
           const yesterday = new Date(today);
           yesterday.setDate(today.getDate() - 1);
-          
+
           let mode, icon, label;
-          if (gameDate.toDateString() === today.toDateString()) {
-            // 今天的比賽 = 即時
+          if (gameDate.getTime() === today.getTime()) {
             mode = 'live';
             icon = '🔴';
             label = '即時';
-          } else if (gameDate <= yesterday) {
-            // 昨天以前的比賽 = 已結束
+          } else if (gameDate.getTime() <= yesterday.getTime()) {
             mode = 'history';
             icon = '📁';
             label = '已結束';
           } else {
-            // 未來的比賽 = 尚未開始
             mode = 'future';
             icon = '⏰';
             label = '尚未開始';
