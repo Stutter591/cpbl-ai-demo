@@ -330,6 +330,7 @@ export function applyEvent(state, ev) {
     case "BB":
     case "IBB":
     case "HBP": {
+      applyRunnerAdvancesLoose(state, advances);
       const forced = forceAdvanceChain(b);
       scoreRun(state, forced);
       b.on1 = true;                      // 打者佔一壘
